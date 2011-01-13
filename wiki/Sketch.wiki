@@ -1,0 +1,95 @@
+#summary Sketch для Carduino/Arduino
+
+= Sketch для Carduino/Arduino =
+
+
+{{{
+#define  D2_High PORTD |=B00000100  //red 
+#define  D2_LOW PORTD &= B11111011 
+#define  D3_High PORTD |=B00001000  //green 
+#define  D3_LOW PORTD &= B11110111 
+#define  D4_High PORTD |=B00010000  //blue 
+#define  D4_LOW PORTD &= B11101111 
+
+#define  D5_High PORTD |=B00100000 
+#define  D5_LOW PORTD &= B11011111 
+#define  D6_High PORTD |=B01000000  
+#define  D6_LOW PORTD &= B10111111 
+#define  D7_High PORTD |=B10000000 
+#define  D7_LOW PORTD &= B01111111 
+
+#define  D8_High PORTB |=B00000001 
+#define  D8_LOW PORTB &= B11111110 
+#define  D9_High PORTB |=B00000010 
+#define  D9_LOW PORTB &= B11111101 
+#define  D10_High PORTB |=B00000100 
+#define  D10_LOW PORTB &= B11111011 
+
+#define D11_High PORTB |=B00001000 
+#define D11_LOW PORTB &= B11110111 
+#define D12_High PORTB |=B00010000 
+#define D12_LOW PORTB &= B11101111 
+#define D13_High PORTB |=B00100000 
+#define D13_LOW PORTB &= B11011111 
+
+volatile unsigned int tcnt2; 
+volatile byte pwm_time; 
+//byte pwm_time, Red_R_Old, Green_L_Old, Blue_T_Old; 
+unsigned long blank=0; //таймер простоя 
+byte volatile color[12];  //массив храннения цветов 12-ть каналов 
+
+
+void setup()  
+{ 
+        for (int i=2; i < 14; i++){pinMode(i, OUTPUT);}   
+        Serial.begin(115200); 
+   
+       TIMSK2 &= ~(1<<TOIE2); //разрешения прерывания по переполнению таймера/счетчика Т2  
+    TCCR2A &= ~((1<<WGM21) | (1<<WGM20));// Режим работы таймера/счетчика 
+    TCCR2B &= ~(1<<WGM22);// Режим работы таймера/счетчика 
+    ASSR &= ~(1<<AS2);  //Выбор источника синхронизации таймера если AS2=0 от системного генератора 
+    tcnt2 = 252; //  16000000/31000/64=8 tcnt2=256-8=248.     
+    TIMSK2 |= (1<<TOIE2);//Разрешение прерывания по переполнению Т2. 
+} 
+
+void loop()  
+{ 
+  if (Serial.available() > 12)  
+  {  
+      if (Serial.read() == 255)  //проверка прификса       
+        { 
+            for (int i = 0; i < 12; i++)  
+             {                 
+               color[i] = Serial.read();  // прочитать данные о цветах из порта в массив 
+             }       
+            // if (Red_R_Old == color[0] && Green_L_Old == color[4] && Blue_T_Old == color[8])   
+             blank=0; 
+        } 
+  } else {  
+           if(blank>100000) { blank=0; for (byte i = 0; i < 12; i++)  color[i] = 0;}  
+          blank++;  
+         }   
+}  
+//****************обработчик прерывания******************** 
+ISR(TIMER2_OVF_vect)  
+{ 
+    TCNT2 = tcnt2; 
+
+ pwm_time++; 
+    if(color[0] > pwm_time ) D2_High;  else D2_LOW;  
+    if(color[1] > pwm_time ) D3_High;  else D3_LOW; 
+    if(color[2] > pwm_time ) D4_High;  else D4_LOW;  
+     
+    if(color[3] > pwm_time ) D5_High;  else D5_LOW; 
+    if(color[4] > pwm_time ) D6_High;  else D6_LOW; 
+    if(color[5] > pwm_time ) D7_High;  else D7_LOW;  
+     
+    if(color[6] > pwm_time ) D8_High;  else D8_LOW; 
+    if(color[7] > pwm_time ) D9_High;  else D9_LOW; 
+    if(color[8] > pwm_time ) D10_High; else D10_LOW; 
+     
+    if(color[9] > pwm_time ) D11_High; else D11_LOW;  
+    if(color[10] > pwm_time) D12_High; else D12_LOW;         
+    if(color[11] > pwm_time) D13_High; else D13_LOW; 
+} 
+}}}
