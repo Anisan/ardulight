@@ -220,11 +220,12 @@ void Window::readSettings()
  qDebug() << "end load settings ";
 }
 
+QRect screenresOld;
 void Window::zoneRecalc()
 {
       int screen = screenComboBox->currentIndex();
     QRect screenres = QApplication::desktop()->screenGeometry(screen);
-
+    screenresOld = screenres ;
     float W = screenres.width() / 100.0;
     float H =screenres.height() / 100.0;
 
@@ -533,6 +534,9 @@ void Window::shootScreen()
                                          screenres.width(),
                                          screenres.height());
 
+    // v1.0.8 пересчет размеров зон при смене разрешения
+    if (screenresOld!=screenres)
+          zoneRecalc();
 
 
     int channels = channelSpinBox->value();
