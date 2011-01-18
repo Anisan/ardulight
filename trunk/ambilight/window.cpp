@@ -50,12 +50,16 @@
 
 #include "delegate.h"
 #include "version.h"
+
+
 //! [0]
 
 #define COUNT_AREA 14
 
 Window::Window()
 {
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+
     // 1.0.6 onTop окно настроек
     this->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Window);
 
@@ -78,13 +82,24 @@ Window::Window()
 
     QHBoxLayout *aLayout = new QHBoxLayout;
     aLayout->addWidget(screenshotLabel);
-
     previewGroupBox->setLayout(aLayout);
+
+    QGroupBox *modeGroupBox = new QGroupBox(tr("Mode"));
+    modeComboBox = new QComboBox;
+    modeComboBox->addItem(QIcon(":/images/ambilight_icon.png"),tr("Ambilight"));
+    modeComboBox->addItem(QIcon(":/images/backlight.png"),tr("Backlight"));
+    modeComboBox->addItem(QIcon(":/images/moodlamp.png"),tr("Mood lamp"));
+
+    QHBoxLayout *mLayout = new QHBoxLayout;
+    mLayout->addWidget(modeComboBox);
+    modeGroupBox->setLayout(mLayout);
+
 
 
     QWidget *colorTabWidget = new QWidget;
     QVBoxLayout *colorLayout = new QVBoxLayout(colorTabWidget);
     colorLayout->addWidget(previewGroupBox);
+    colorLayout->addWidget(modeGroupBox);
     colorLayout->addWidget(colorGroupBox);
 
      QWidget *hardTabWidget = new QWidget;
@@ -93,7 +108,7 @@ Window::Window()
      hardLayout->addWidget(advGroupBox);
      saveAdv = new QPushButton(tr("Apply"));
      hardLayout->addWidget(saveAdv);
-     QString about = QString("%1 v.%2").arg(tr("Ambilight - 2010 - Eraser Soft")).arg(VERSION_STR);
+     QString about = QString("%1 v.%2").arg(tr("Ambilight - 2011 - Eraser Soft")).arg(VERSION_STR);
      hardLayout->addWidget(new QLabel(about),0,Qt::AlignCenter);
 
      zoneTabWidget = new QWidget;
@@ -141,6 +156,8 @@ Window::Window()
     connect(blueSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(thresholdSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
 
+    connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(changeMode()));
+
 
     connect(saveAdv, SIGNAL(clicked()), this, SLOT(saveSettings()));
 
@@ -162,6 +179,10 @@ void Window::readSettings()
 {
     qDebug() << " load settings ";
    // QSettings settings("EraserSoft", "Ambiligth");
+
+    int mode = settings->value("WorkMode",0).toInt();
+    modeComboBox->setCurrentIndex( mode);
+    changeMode();
 
    brightnessSlider->setValue(settings->value("Brightness", 192).toInt());
    saturationSlider->setValue(settings->value("Saturation", 96).toInt());
@@ -295,7 +316,8 @@ void Window::saveSettings()
 
 void Window::saveColorSettings()
 {
-     qDebug() << " save color settings";
+    qDebug() << " save color settings";
+    settings->setValue("WorkMode", modeComboBox->currentIndex());
     settings->setValue("Brightness", brightnessSlider->value());
     settings->setValue("Saturation", saturationSlider->value());
     settings->setValue("Red", redSlider->value());
@@ -560,32 +582,181 @@ void Window::shootScreen()
           if (channels>36) GetPix(R3,getData(12,4));
           if (channels>39) GetPix(L3,getData(13,4));
 
-          QByteArray data;
-          data.append(*ba);
-          // проверка
-          if (!port->isOpen())
-          {
-              onAction->setEnabled(true);
-              offAction->setEnabled(false);
-              if (onAmbiligth)
-                setIcon(3);
-              onAmbiligth = false;
-          }
-          else
-            // пишем в порт
-            port->write(data);
-
-
+        writePort();
 
    refreshAmbilightEvaluated(t.elapsed());
 
    updateScreenshotLabel();
+   nextWork();
 
-   if (onAmbiligth)
-       QTimer::singleShot(delaySpinBox->value(), this, SLOT(shootScreen()));
-   else
-       closePort();
 }
+
+////********************************************************
+void Window::backLight()
+{
+    QTime t;
+    t.start();
+
+
+    int Red = redSlider->value();
+    int Green =greenSlider->value();
+    int Blue =blueSlider->value();
+    int TrackBar_Sol = saturationSlider->value();
+    Red=(Red+((Red / 128.0) * TrackBar_Sol));
+    Green=(Green+((Green / 128.0) * TrackBar_Sol));  // насыщенность
+    Blue=(Blue+((Blue / 128.0) * TrackBar_Sol));
+
+    int TrackBar_Light =255-brightnessSlider->value();
+   Red=IntToByte(Red-(qFloor(Red*TrackBar_Light)/ 255.0));
+   Green=IntToByte(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//€ркость
+   Blue=IntToByte(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
+
+    int channels = channelSpinBox->value();
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels;i=i+3)
+    {
+        ba->append(Red);
+        ba->append(Green);
+        ba->append(Blue);
+    }
+
+   writePort();
+
+   refreshAmbilightEvaluated(t.elapsed());
+
+   if (!this->isHidden())
+   {
+       originalPixmap = QPixmap(10,10);
+       QPainter p(&originalPixmap);
+       p.fillRect(QRect(0,0,10,10),QColor(Red,Green,Blue));
+       screenshotLabel->setPixmap(originalPixmap.scaled(screenshotLabel->size(),
+                                                  Qt::KeepAspectRatio,
+                                                  Qt::SmoothTransformation));
+  }
+   nextWork();
+
+}
+int random(int val)
+{
+    return qrand()%val;
+}
+
+////********************************************************
+int newRed=0;
+int newGreen=0;
+int newBlue=0;
+int Red=0;
+int Green=0;
+int Blue=0;
+
+void Window::moodLamp()
+{
+    QTime t;
+    t.start();
+
+  //   qDebug() <<  Red <<" " << Green  <<" "<< Blue;
+ //  qDebug() << "new " << newRed <<" " << newGreen  <<" "<< newBlue;
+
+
+    if ((Red==newRed) && (Green==newGreen) && (Blue==newBlue))
+    {
+        newRed = random(255);
+        newGreen =random(255);
+        newBlue =random(255);
+        int sw = random(8);
+        switch (sw)
+        {
+            case 0:             newRed=0;            break;
+            case 1:            newGreen=0;            break;
+            case 2:            newBlue=0;            break;
+            case 3:             newBlue=0;            newRed=0;            break;
+            case 4:            newGreen=0;            newRed=0;            break;
+            case 5:            newGreen=0;            newBlue=0;            break;
+        }
+    }
+
+    if(newRed!=Red) { if (Red>newRed) --Red; else ++Red;}
+    if(newGreen!=Green)  {if (Green>newGreen) --Green; else ++Green;}
+    if(newBlue!=Blue)  {if (Blue>newBlue) --Blue; else ++Blue;}
+
+    int TrackBar_Sol = saturationSlider->value();
+   int prRed=(Red+((Red / 128.0) * TrackBar_Sol));
+   int prGreen=(Green+((Green / 128.0) * TrackBar_Sol));  // насыщенность
+   int prBlue=(Blue+((Blue / 128.0) * TrackBar_Sol));
+
+    int TrackBar_Light =255-brightnessSlider->value();
+   prRed=IntToByte(prRed-(qFloor(prRed*TrackBar_Light)/ 255.0));
+   prGreen=IntToByte(prGreen-(qFloor(prGreen*TrackBar_Light)/ 255.0));//€ркость
+   prBlue=IntToByte(prBlue-(qFloor(prBlue*TrackBar_Light)/ 255.0));
+
+    int channels = channelSpinBox->value();
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels;i=i+3)
+    {
+        ba->append(prRed);
+        ba->append(prGreen);
+        ba->append(prBlue);
+    }
+
+   writePort();
+
+   refreshAmbilightEvaluated(t.elapsed());
+
+   if (!this->isHidden())
+   {
+       originalPixmap = QPixmap(10,10);
+       QPainter p(&originalPixmap);
+       p.fillRect(QRect(0,0,10,10),QColor(prRed,prGreen,prBlue));
+       screenshotLabel->setPixmap(originalPixmap.scaled(screenshotLabel->size(),
+                                                  Qt::KeepAspectRatio,
+                                                  Qt::SmoothTransformation));
+  }
+   nextWork();
+
+}
+
+void Window::nextWork()
+{
+    if (!onAmbiligth)
+    {
+        closePort();
+        return;
+    }
+
+    switch (modeComboBox->currentIndex())
+    {
+    case 0:
+        QTimer::singleShot(delaySpinBox->value(), this, SLOT(shootScreen()));
+        break;
+    case 1:
+        QTimer::singleShot(delaySpinBox->value(), this, SLOT(backLight()));
+        break;
+    case 2:
+        QTimer::singleShot(delaySpinBox->value(), this, SLOT(moodLamp()));
+        break;
+    }
+
+}
+
+void Window::writePort()
+{
+        QByteArray data;
+        data.append(*ba);
+        // проверка
+        if (!port->isOpen())
+        {
+            onAction->setEnabled(true);
+            offAction->setEnabled(false);
+            if (onAmbiligth)
+              setIcon(3);
+            onAmbiligth = false;
+        }
+        else
+          // пишем в порт
+          port->write(data);
+ }
 
  //v1.0.4 частота обновлени€
 void Window::refreshAmbilightEvaluated(double updateResultMs)
@@ -931,15 +1102,23 @@ void Window::createColorGroupBox()
 
 void  Window::on_ambiligth()
 {
-    openPort();
-
     setIcon(2);
     onAction->setEnabled(false);
     offAction->setEnabled(true);
-
     onAmbiligth = true;
-
-    shootScreen();
+    openPort();
+    switch (modeComboBox->currentIndex())
+    {
+    case 0:
+         shootScreen();
+        break;
+    case 1:
+       backLight();
+        break;
+    case 2:
+        moodLamp();
+        break;
+    }
 
 }
 
@@ -950,6 +1129,37 @@ void  Window::off_ambiligth()
      offAction->setEnabled(false);
 
      onAmbiligth = false;
+}
+
+void Window::changeMode()
+{
+    switch (modeComboBox->currentIndex())
+    {
+    case 0:
+        thresholdSlider->setEnabled(true);
+        brightnessSlider->setEnabled(true);
+        saturationSlider->setEnabled(true);
+        redSlider->setEnabled(true);
+        greenSlider->setEnabled(true);
+        blueSlider->setEnabled(true);
+        break;
+    case 1:
+        thresholdSlider->setEnabled(false);
+        brightnessSlider->setEnabled(true);
+        saturationSlider->setEnabled(true);
+        redSlider->setEnabled(true);
+        greenSlider->setEnabled(true);
+        blueSlider->setEnabled(true);
+        break;
+    case 2:
+        thresholdSlider->setEnabled(false);
+        brightnessSlider->setEnabled(true);
+        saturationSlider->setEnabled(true);
+        redSlider->setEnabled(false);
+        greenSlider->setEnabled(false);
+        blueSlider->setEnabled(false);
+        break;
+    }
 }
 
 void Window::createActions()

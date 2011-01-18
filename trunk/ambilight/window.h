@@ -90,6 +90,9 @@ private slots:
     void saveSettings();
     void saveColorSettings();
     void shootScreen();
+    void backLight();
+    void moodLamp();
+    void changeMode();
     void slotPrintAllDevices(const QStringList &list);
     void zoneSaveSettings();
     void zoneRecalc();
@@ -129,7 +132,11 @@ private:
     void GetPix(QRect rect,int brightness);
     int IntToByte(int i);
     void refreshAmbilightEvaluated(double updateResultMs);
+    void writePort();
+    void nextWork();
 
+
+    QComboBox *modeComboBox;
 
 
     QWidget *zoneTabWidget;
