@@ -8,5 +8,8 @@
         <file>images/error.png</file>
         <file>translate/Ambilight_ru_RU.qm</file>
         <file>images/tv.png</file>
+        <file>images/backlight.png</file>
+        <file>images/ambilight_icon.png</file>
+        <file>images/moodlamp.png</file>
     </qresource>
 </RCC>
