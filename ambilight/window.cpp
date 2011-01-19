@@ -133,9 +133,12 @@ Window::Window()
     readSettings();
 
 
-      //v 1.0.7  global shirtcuts
+    //v 1.0.7  global shirtcuts on/off
    QString SHORTCUT_AMB = hotkeyLine->text();
+   //v 1.1.2  global shirtcuts mode
+   QString SHORTCUT_MODE = hotkeyLineMode->text();
     hotkeyAmbilight->connect(QKeySequence(SHORTCUT_AMB),this,SLOT(switchAmbilight()));
+    hotkeyMode->connect(QKeySequence(SHORTCUT_MODE),this,SLOT(switchMode()));
 
     onAction->setEnabled(!onAmbiligth);
     offAction->setEnabled(onAmbiligth);
@@ -155,6 +158,7 @@ Window::Window()
     connect(greenSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(blueSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(thresholdSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
+    connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(saveColorSettingsFF()));
 
     connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(changeMode()));
 
@@ -180,8 +184,11 @@ void Window::readSettings()
     qDebug() << " load settings ";
    // QSettings settings("EraserSoft", "Ambiligth");
 
-    int mode = settings->value("WorkMode",0).toInt();
-    modeComboBox->setCurrentIndex( mode);
+    modeComboBox->setCurrentIndex( settings->value("WorkMode",0).toInt());
+     //v 1.1.2 auto start mode
+    modeStartComboBox->setCurrentIndex( settings->value("StartMode",0).toInt());
+    if (modeStartComboBox->currentIndex()<3)
+       modeComboBox->setCurrentIndex(modeStartComboBox->currentIndex());
     changeMode();
 
    brightnessSlider->setValue(settings->value("Brightness", 192).toInt());
@@ -202,6 +209,7 @@ void Window::readSettings()
    stepSpinBox->setValue(settings->value("StepGrid",5).toInt());
 
    hotkeyLine->setText(settings->value("Hotkey","Ctrl+Alt+F").toString());
+   hotkeyLineMode->setText(settings->value("HotkeyMode","Ctrl+Alt+M").toString());
 
    ba = new QByteArray;
    ba->clear();
@@ -296,11 +304,13 @@ void Window::saveSettings()
 {
      qDebug() << " save settings";
     settings->setValue("onAmbilight", onAmbiligthCheckBox->isChecked());
+    settings->setValue("StartMode", modeStartComboBox->currentIndex());
     settings->setValue("Screen",screenComboBox->currentText());
     settings->setValue("Delay",delaySpinBox->value());
     settings->setValue("Channels",channelSpinBox->value());
 
     settings->setValue("Hotkey",hotkeyLine->text());
+    settings->setValue("HotkeyMode",hotkeyLineMode->text());
 
     settings->setValue("ComPort",comComboBox->currentText());
     settings->setValue("BaudRate",brComboBox->currentText());
@@ -861,6 +871,17 @@ void Window::iconActivated(QSystemTrayIcon::ActivationReason reason)
 }
 //! [4]
 
+void Window::switchMode()
+{
+    if (modeComboBox->currentIndex()==modeComboBox->count()-1)
+           modeComboBox->setCurrentIndex(0);
+        else
+    {
+            int i = modeComboBox->currentIndex();
+           modeComboBox->setCurrentIndex(++i);
+     }
+}
+
 void Window::switchAmbilight()
 {
     if (onAmbiligth)
@@ -961,6 +982,12 @@ void Window::createAdvancedGroupBox()
 
     onAmbiligthCheckBox = new QCheckBox(tr("On ambilight with start"));
 
+    modeStartComboBox = new QComboBox;
+    modeStartComboBox->addItem(QIcon(":/images/ambilight_icon.png"),tr("Ambilight"));
+    modeStartComboBox->addItem(QIcon(":/images/backlight.png"),tr("Backlight"));
+    modeStartComboBox->addItem(QIcon(":/images/moodlamp.png"),tr("Mood lamp"));
+    modeStartComboBox->addItem(QIcon(":/images/settings.png"),tr("Last mode"));
+
 
     QLabel *screenLabel = new QLabel(tr("Screen"));
     QLabel *delayLabel = new QLabel(tr("Refresh ambilight delay"));
@@ -970,6 +997,8 @@ void Window::createAdvancedGroupBox()
     QLabel *refreshLabel2 = new QLabel(tr("Hz"));
     QLabel *hotkeyLabel = new QLabel(tr("Hotkey on/off"));
     QLabel *hotkeyLabel2 = new QLabel(tr("(need restart)"));
+    QLabel *hotkey2Label = new QLabel(tr("Hotkey switch mode"));
+
 
 
     refreshAmbiliht = new QLabel();
@@ -990,7 +1019,8 @@ void Window::createAdvancedGroupBox()
 
     QGridLayout *aLayout = new QGridLayout;
 
-    aLayout->addWidget(onAmbiligthCheckBox,0,0,1,3);
+    aLayout->addWidget(onAmbiligthCheckBox,0,0);
+    aLayout->addWidget(modeStartComboBox,0,1);
     aLayout->addWidget(screenLabel,1,0);
     aLayout->addWidget(screenComboBox,1,1);
     aLayout->addWidget(delayLabel,2,0);
@@ -1005,7 +1035,11 @@ void Window::createAdvancedGroupBox()
     aLayout->addWidget(hotkeyLabel,5,0);
     hotkeyLine = new QLineEdit();
     aLayout->addWidget(hotkeyLine,5,1);
-    aLayout->addWidget(hotkeyLabel2,5,2);
+    aLayout->addWidget(hotkeyLabel2,5,2,2,1);
+
+    aLayout->addWidget(hotkey2Label,6,0);
+    hotkeyLineMode = new QLineEdit();
+    aLayout->addWidget(hotkeyLineMode,6,1);
 
     advGroupBox->setLayout(aLayout);
 }
