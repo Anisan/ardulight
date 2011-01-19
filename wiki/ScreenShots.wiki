@@ -1,0 +1,10 @@
+#summary Скриншоты
+
+= Скриншоты =
+
+<img src="http://ardulight.googlecode.com/files/ambilight.jpg"><br>
+<img src="http://ardulight.googlecode.com/files/backligth.jpg"><br>
+<img src="http://ardulight.googlecode.com/files/moodlamp.jpg"><br>
+<img src="http://ardulight.googlecode.com/files/zones_settings.jpg"><br>
+<img src="http://ardulight.googlecode.com/files/advanced_settings.jpg"><br>
+
