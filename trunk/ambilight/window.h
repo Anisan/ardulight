@@ -97,9 +97,11 @@ private slots:
     void zoneSaveSettings();
     void zoneRecalc();
     void switchAmbilight();
+    void switchMode();
 
 private:
     GlobalShortcutManager *hotkeyAmbilight;
+    GlobalShortcutManager *hotkeyMode;
 
     SerialDeviceEnumerator *m_sde;
     AbstractSerial *port;
@@ -137,6 +139,7 @@ private:
 
 
     QComboBox *modeComboBox;
+    QComboBox *modeStartComboBox;
 
 
     QWidget *zoneTabWidget;
@@ -189,6 +192,7 @@ private:
     QSlider *blueSlider;
 
     QLineEdit *hotkeyLine;
+    QLineEdit *hotkeyLineMode;
 
     QGroupBox *colorGroupBox;
 
