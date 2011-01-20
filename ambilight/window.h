@@ -89,6 +89,7 @@ private slots:
     void off_ambiligth();
     void saveSettings();
     void saveColorSettings();
+    void saveModeSettings();
     void shootScreen();
     void backLight();
     void moodLamp();

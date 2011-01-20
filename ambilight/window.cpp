@@ -108,8 +108,13 @@ Window::Window()
      hardLayout->addWidget(advGroupBox);
      saveAdv = new QPushButton(tr("Apply"));
      hardLayout->addWidget(saveAdv);
-     QString about = QString("%1 v.%2").arg(tr("Ambilight - 2011 - Eraser Soft")).arg(VERSION_STR);
-     hardLayout->addWidget(new QLabel(about),0,Qt::AlignCenter);
+     QString about = QString("<a href=\"http://code.google.com/p/ardulight/\">%1 v.%2</a>").arg("Ambilight - 2011 - Eraser Soft").arg(VERSION_STR);
+     QLabel *label= new QLabel;
+     label->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
+     label->setOpenExternalLinks(true);
+     label->setText(about);
+     label->show();
+     hardLayout->addWidget(label,0,Qt::AlignCenter);
 
      zoneTabWidget = new QWidget;
      createZoneTab();
@@ -126,7 +131,7 @@ Window::Window()
     setIcon(1);
 
 
-    setWindowTitle(tr("Ambilight"));
+    setWindowTitle(QString("%1 v.%2").arg(tr("Ambilight")).arg(VERSION_STR));
     setWindowIcon(QIcon(":/images/ambilight_icon.ico"));
     resize(400, 300);
 
@@ -158,7 +163,7 @@ Window::Window()
     connect(greenSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(blueSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(thresholdSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
-    connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(saveColorSettingsFF()));
+    connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(saveModeSettings()));
 
     connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(changeMode()));
 
@@ -190,14 +195,6 @@ void Window::readSettings()
     if (modeStartComboBox->currentIndex()<3)
        modeComboBox->setCurrentIndex(modeStartComboBox->currentIndex());
     changeMode();
-
-   brightnessSlider->setValue(settings->value("Brightness", 192).toInt());
-   saturationSlider->setValue(settings->value("Saturation", 96).toInt());
-   redSlider->setValue(settings->value("Red", 128).toInt());
-   greenSlider->setValue(settings->value("Green", 128).toInt());
-   blueSlider->setValue(settings->value("Blue", 128).toInt());
-
-   thresholdSlider->setValue(settings->value("Threshold", 0).toInt());
 
    onAmbiligth = settings->value("onAmbilight",false).toBool();
    onAmbiligthCheckBox->setChecked(settings->value("onAmbilight",false).toBool());
@@ -326,14 +323,20 @@ void Window::saveSettings()
 
 void Window::saveColorSettings()
 {
+    // v1.1.3 настройки цвета дл€ каждого режима
     qDebug() << " save color settings";
+    settings->setValue(QString("Brightness_%1").arg(modeComboBox->currentIndex()), brightnessSlider->value());
+    settings->setValue(QString("Saturation_%1").arg(modeComboBox->currentIndex()), saturationSlider->value());
+    settings->setValue(QString("Red_%1").arg(modeComboBox->currentIndex()), redSlider->value());
+    settings->setValue(QString("Green_%1").arg(modeComboBox->currentIndex()), greenSlider->value());
+    settings->setValue(QString("Blue_%1").arg(modeComboBox->currentIndex()), blueSlider->value());
+    settings->setValue(QString("Threshold_%1").arg(modeComboBox->currentIndex()), thresholdSlider->value());
+}
+
+void Window::saveModeSettings()
+{
+    qDebug() << " save mode settings";
     settings->setValue("WorkMode", modeComboBox->currentIndex());
-    settings->setValue("Brightness", brightnessSlider->value());
-    settings->setValue("Saturation", saturationSlider->value());
-    settings->setValue("Red", redSlider->value());
-    settings->setValue("Green", greenSlider->value());
-    settings->setValue("Blue", blueSlider->value());
-    settings->setValue("Threshold", thresholdSlider->value());
 }
 //*******************************************************************
 void Window::openPort()
@@ -358,7 +361,7 @@ if (port->open(AbstractSerial::WriteOnly)) {
         qDebug() << "Flow                   : " << port->flowControl();
         qDebug() << "Char timeout, msec     : " << port->charIntervalTimeout();
 
-        AbstractSerial::BaudRate baud;
+        AbstractSerial::BaudRate baud = AbstractSerial::BaudRate115200;
         switch (brComboBox->currentIndex())
         {
             case 0: baud = AbstractSerial::BaudRate300; break;
@@ -379,7 +382,7 @@ if (port->open(AbstractSerial::WriteOnly)) {
             qDebug() << "Set baud rate " <<  baud << " error.";
         };
 
-        AbstractSerial::DataBits dataBits;
+        AbstractSerial::DataBits dataBits = AbstractSerial::DataBits8;
                     switch (dbComboBox->currentIndex())
                     {
                     case 0: dataBits = AbstractSerial::DataBits7; break;
@@ -389,7 +392,7 @@ if (port->open(AbstractSerial::WriteOnly)) {
             qDebug() << "Set data bits " << dataBits << " error.";
         }
 
-        AbstractSerial::Parity par;
+        AbstractSerial::Parity par = AbstractSerial::ParityNone;
         switch (pComboBox->currentIndex())
         {
         case 0: par = AbstractSerial::ParityNone; break;
@@ -402,7 +405,7 @@ if (port->open(AbstractSerial::WriteOnly)) {
             qDebug() << "Set parity " << par << " error.";
         }
 
-        AbstractSerial::StopBits stopBits;
+        AbstractSerial::StopBits stopBits  = AbstractSerial::StopBits2;
                     switch (sbComboBox->currentIndex())
                     {
                     case 0: stopBits = AbstractSerial::StopBits1; break;
@@ -744,7 +747,8 @@ void Window::nextWork()
         QTimer::singleShot(delaySpinBox->value(), this, SLOT(backLight()));
         break;
     case 2:
-        QTimer::singleShot(delaySpinBox->value(), this, SLOT(moodLamp()));
+        // частоту увеличиваем на 10, иначе слишком быстро мен€ютс€ цвета
+        QTimer::singleShot(delaySpinBox->value()+10, this, SLOT(moodLamp()));
         break;
     }
 
@@ -1122,6 +1126,7 @@ void Window::createColorGroupBox()
 
     messageLayout->setColumnMinimumWidth(2,20);
 
+    // динамическое отображение значений
     connect(brightnessSlider, SIGNAL(valueChanged(int)), brightnessLabel,  SLOT(setNum(int)));
     connect(saturationSlider, SIGNAL(valueChanged(int)), saturationLabel,  SLOT(setNum(int)));
     connect(redSlider, SIGNAL(valueChanged(int)), redLabel,  SLOT(setNum(int)));
@@ -1194,6 +1199,13 @@ void Window::changeMode()
         blueSlider->setEnabled(false);
         break;
     }
+
+    brightnessSlider->setValue(settings->value(QString("Brightness_%1").arg(modeComboBox->currentIndex()), 192).toInt());
+    saturationSlider->setValue(settings->value(QString("Saturation_%1").arg(modeComboBox->currentIndex()), 96).toInt());
+    redSlider->setValue(settings->value(QString("Red_%1").arg(modeComboBox->currentIndex()), 128).toInt());
+    greenSlider->setValue(settings->value(QString("Green_%1").arg(modeComboBox->currentIndex()), 128).toInt());
+    blueSlider->setValue(settings->value(QString("Blue_%1").arg(modeComboBox->currentIndex()), 128).toInt());
+    thresholdSlider->setValue(settings->value(QString("Threshold_%1").arg(modeComboBox->currentIndex()), 0).toInt());
 }
 
 void Window::createActions()
@@ -1210,6 +1222,7 @@ void Window::createActions()
     quitAction = new QAction(QIcon(":/images/error.png"),tr("&Quit"), this);
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
 }
+
 
 void Window::createTrayIcon()
 {
