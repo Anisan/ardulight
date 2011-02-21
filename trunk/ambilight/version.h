@@ -2,6 +2,6 @@
 #define VERSION_H
 
 // Current version
-#define VERSION_STR     "1.1.3"
+#define VERSION_STR     "1.1.4"
 
 #endif // VERSION_H

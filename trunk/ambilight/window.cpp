@@ -41,7 +41,7 @@
 #include <QtGui>
 #include <QtCore/QStringList>
 #include <QtCore/qmath.h>
- #include <QScreen>
+#include <QScreen>
 #include "window.h"
 #include "serialdeviceenumerator.h"
 #include <abstractserial.h>
@@ -106,6 +106,14 @@ Window::Window()
      QVBoxLayout *hardLayout = new QVBoxLayout(hardTabWidget);
      hardLayout->addWidget(comGroupBox);
      hardLayout->addWidget(advGroupBox);
+     QGroupBox *testGroupBox = new QGroupBox(tr("Testing"));
+     QHBoxLayout *testLayout = new QHBoxLayout(testGroupBox);
+     QPushButton *colorTestButton = new QPushButton(tr("Color test"));
+     QPushButton *zoneTestButton = new QPushButton(tr("Zone test"));
+     testLayout->addWidget(colorTestButton);
+     testLayout->addWidget(zoneTestButton);
+      hardLayout->addWidget(testGroupBox);
+
      saveAdv = new QPushButton(tr("Apply"));
      hardLayout->addWidget(saveAdv);
      QString about = QString("<a href=\"http://code.google.com/p/ardulight/\">%1 v.%2</a>").arg("Ambilight - 2011 - Eraser Soft").arg(VERSION_STR);
@@ -156,6 +164,9 @@ Window::Window()
         setIcon(1);
 
     connect(saveZone, SIGNAL(clicked()), this, SLOT(zoneSaveSettings()));
+
+    connect(colorTestButton, SIGNAL(clicked()),this,SLOT(TestColor()));
+    connect(zoneTestButton, SIGNAL(clicked()),this,SLOT(TestZone()));
 
     connect(brightnessSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(saturationSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
@@ -753,6 +764,96 @@ void Window::nextWork()
     }
 
 }
+
+void Sleep(int time)
+{
+     QEventLoop loop; QTimer::singleShot(time, &loop, SLOT(quit())); loop.exec();
+}
+
+void  Window::TestColor()
+{
+    off_ambiligth();
+    int n=0;
+    int f =255;
+    int channels = channelSpinBox->value();
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels;i=i+3)
+    {
+        ba->append(f);
+        ba->append(n);
+        ba->append(n);
+    }
+    writePort();
+   Sleep(1000);
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels;i=i+3)
+    {
+        ba->append(n);
+        ba->append(f);
+        ba->append(n);
+    }
+    writePort();
+    Sleep(1000);
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels;i=i+3)
+    {
+        ba->append(n);
+        ba->append(n);
+        ba->append(f);
+    }
+    writePort();
+    Sleep(1000);
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels;i=i+3)
+    {
+        ba->append(f);
+        ba->append(f);
+        ba->append(f);
+    }
+    writePort();
+
+}
+
+void  Window::TestZone()
+{
+    off_ambiligth();
+    int n=0;
+    int f =255;
+    int channels = channelSpinBox->value();
+    ba->clear();
+    ba->append(255); // префикс
+    for (int i=0;i<channels/3;++i)
+    {
+        ba->clear();
+        ba->append(255); // префикс
+        for (int j=0;j<channels/3;++j)
+        {
+            if (i==j)
+            {
+            ba->append(f);
+            ba->append(f);
+            ba->append(f);
+           }
+            else
+            {
+                ba->append(n);
+                ba->append(n);
+                ba->append(n);
+            }
+        }
+        writePort();
+        Sleep(1000);
+    }
+
+
+
+}
+
+
 
 void Window::writePort()
 {
