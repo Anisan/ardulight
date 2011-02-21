@@ -17,7 +17,7 @@
 <context>
     <name>Window</name>
     <message>
-        <location filename="../window.cpp" line="117"/>
+        <location filename="../window.cpp" line="130"/>
         <source>Main</source>
         <translation type="unfinished">Основные</translation>
     </message>
@@ -26,14 +26,14 @@
         <translation type="obsolete">Зоны</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="119"/>
+        <location filename="../window.cpp" line="132"/>
         <source>Advanced</source>
         <translation type="unfinished">Расширенные</translation>
     </message>
     <message>
         <location filename="../window.cpp" line="89"/>
-        <location filename="../window.cpp" line="129"/>
-        <location filename="../window.cpp" line="986"/>
+        <location filename="../window.cpp" line="142"/>
+        <location filename="../window.cpp" line="1091"/>
         <source>Ambilight</source>
         <translation type="unfinished">Эмбилайт</translation>
     </message>
@@ -42,213 +42,213 @@
         <translation type="obsolete">Ошибка</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="896"/>
+        <location filename="../window.cpp" line="1001"/>
         <source>Hardware settings</source>
         <translation type="unfinished">Настройки железа</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="897"/>
+        <location filename="../window.cpp" line="1002"/>
         <source>Port:</source>
         <translation type="unfinished">Порт:</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="906"/>
+        <location filename="../window.cpp" line="1011"/>
         <source>Baud Rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="907"/>
+        <location filename="../window.cpp" line="1012"/>
         <source>Data Bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="908"/>
+        <location filename="../window.cpp" line="1013"/>
         <source>Stop Bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="909"/>
+        <location filename="../window.cpp" line="1014"/>
         <source>Parity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="912"/>
+        <location filename="../window.cpp" line="1017"/>
         <source>300</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="913"/>
+        <location filename="../window.cpp" line="1018"/>
         <source>600</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="914"/>
+        <location filename="../window.cpp" line="1019"/>
         <source>1.200</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="915"/>
+        <location filename="../window.cpp" line="1020"/>
         <source>2.400</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="916"/>
+        <location filename="../window.cpp" line="1021"/>
         <source>4.800</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="917"/>
+        <location filename="../window.cpp" line="1022"/>
         <source>9.600</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="918"/>
+        <location filename="../window.cpp" line="1023"/>
         <source>19.200</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="919"/>
+        <location filename="../window.cpp" line="1024"/>
         <source>38.400</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="920"/>
+        <location filename="../window.cpp" line="1025"/>
         <source>57.600</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="921"/>
+        <location filename="../window.cpp" line="1026"/>
         <source>115.200</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="922"/>
+        <location filename="../window.cpp" line="1027"/>
         <source>230.400</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="923"/>
+        <location filename="../window.cpp" line="1028"/>
         <source>460.800</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="924"/>
+        <location filename="../window.cpp" line="1029"/>
         <source>921.600</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="927"/>
+        <location filename="../window.cpp" line="1032"/>
         <source>7 bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="928"/>
+        <location filename="../window.cpp" line="1033"/>
         <source>8 bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="931"/>
+        <location filename="../window.cpp" line="1036"/>
         <source>1 bit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="932"/>
+        <location filename="../window.cpp" line="1037"/>
         <source>2 bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="935"/>
-        <location filename="../window.cpp" line="946"/>
+        <location filename="../window.cpp" line="1040"/>
+        <location filename="../window.cpp" line="1051"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="936"/>
+        <location filename="../window.cpp" line="1041"/>
         <source>Odd</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="937"/>
+        <location filename="../window.cpp" line="1042"/>
         <source>Even</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="938"/>
+        <location filename="../window.cpp" line="1043"/>
         <source>Mark</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="939"/>
+        <location filename="../window.cpp" line="1044"/>
         <source>Space</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="941"/>
+        <location filename="../window.cpp" line="1046"/>
         <source>Flow Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="942"/>
+        <location filename="../window.cpp" line="1047"/>
         <source>RTS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="943"/>
+        <location filename="../window.cpp" line="1048"/>
         <source>DTR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="947"/>
+        <location filename="../window.cpp" line="1052"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="948"/>
+        <location filename="../window.cpp" line="1053"/>
         <source>X-On/X-Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="981"/>
+        <location filename="../window.cpp" line="1086"/>
         <source>Advanced settings</source>
         <translation type="unfinished">Дополнительно</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="983"/>
+        <location filename="../window.cpp" line="1088"/>
         <source>On ambilight with start</source>
         <translation type="unfinished">Включить при старте</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="989"/>
+        <location filename="../window.cpp" line="1094"/>
         <source>Last mode</source>
         <translation type="unfinished">Последний</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="998"/>
+        <location filename="../window.cpp" line="1103"/>
         <source>Hotkey on/off</source>
         <translation type="unfinished">Горячие клавиши вкл/выкл</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="999"/>
+        <location filename="../window.cpp" line="1104"/>
         <source>(need restart)</source>
         <translation type="unfinished">(нужен перезапуск)</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1000"/>
+        <location filename="../window.cpp" line="1105"/>
         <source>Hotkey switch mode</source>
         <translation type="unfinished">Горячие клавиши смены режима</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1239"/>
+        <location filename="../window.cpp" line="1353"/>
         <source>View zone on desktop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1245"/>
+        <location filename="../window.cpp" line="1359"/>
         <source>View area on preview</source>
         <translation type="unfinished">Показывать зоны в предпросмотре</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="992"/>
+        <location filename="../window.cpp" line="1097"/>
         <source>Screen</source>
         <translation type="unfinished">Экран</translation>
     </message>
@@ -259,89 +259,84 @@
     </message>
     <message>
         <location filename="../window.cpp" line="90"/>
-        <location filename="../window.cpp" line="987"/>
+        <location filename="../window.cpp" line="1092"/>
         <source>Backlight</source>
         <translation type="unfinished">Подсветка</translation>
     </message>
     <message>
         <location filename="../window.cpp" line="91"/>
-        <location filename="../window.cpp" line="988"/>
+        <location filename="../window.cpp" line="1093"/>
         <source>Mood lamp</source>
         <translation type="unfinished">Лампа настроения</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="111"/>
-        <source>Ambilight - 2011 - Eraser Soft</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../window.cpp" line="993"/>
+        <location filename="../window.cpp" line="1098"/>
         <source>Refresh ambilight delay</source>
         <translation type="unfinished">Скорость обновления</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="994"/>
+        <location filename="../window.cpp" line="1099"/>
         <source>ms</source>
         <translation type="unfinished">мс</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="995"/>
+        <location filename="../window.cpp" line="1100"/>
         <source>Channel:</source>
         <translation type="unfinished">Каналы:</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="996"/>
+        <location filename="../window.cpp" line="1101"/>
         <source>Refresh ambilight</source>
         <translation type="unfinished">Частота обновления</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="997"/>
+        <location filename="../window.cpp" line="1102"/>
         <source>Hz</source>
         <translation type="unfinished">Гц</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1078"/>
+        <location filename="../window.cpp" line="1183"/>
         <source>Colors settings</source>
         <translation type="unfinished">Настройки цвета</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1104"/>
-        <location filename="../window.cpp" line="1265"/>
+        <location filename="../window.cpp" line="1209"/>
+        <location filename="../window.cpp" line="1379"/>
         <source>Brightness</source>
         <translation type="unfinished">Яркость</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1107"/>
+        <location filename="../window.cpp" line="1212"/>
         <source>Saturation</source>
         <translation type="unfinished">Насыщенность</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1110"/>
+        <location filename="../window.cpp" line="1215"/>
         <source>Hue red</source>
         <translation type="unfinished">Оттенок красного</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1113"/>
+        <location filename="../window.cpp" line="1218"/>
         <source>Hue green</source>
         <translation type="unfinished">Оттенок зеленого</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1116"/>
+        <location filename="../window.cpp" line="1221"/>
         <source>Hue blue</source>
         <translation type="unfinished">Оттенок синего</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1119"/>
+        <location filename="../window.cpp" line="1224"/>
         <source>Threshold</source>
         <translation type="unfinished">Порог срабатывания</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1248"/>
+        <location filename="../window.cpp" line="1362"/>
         <source>View grid on preview. Step </source>
         <translation type="unfinished">Показывать сетку в предпросмотре. Шаг</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1269"/>
+        <location filename="../window.cpp" line="1383"/>
         <source>Area </source>
         <translation type="unfinished">Зона </translation>
     </message>
@@ -402,8 +397,8 @@
         <translation type="obsolete">Зона 14</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="109"/>
-        <location filename="../window.cpp" line="1259"/>
+        <location filename="../window.cpp" line="117"/>
+        <location filename="../window.cpp" line="1373"/>
         <source>Apply</source>
         <translation type="unfinished">Применить</translation>
     </message>
@@ -413,42 +408,57 @@
         <translation type="unfinished">Предпросмотр</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="118"/>
+        <location filename="../window.cpp" line="109"/>
+        <source>Testing</source>
+        <translation type="unfinished">Тестирование</translation>
+    </message>
+    <message>
+        <location filename="../window.cpp" line="111"/>
+        <source>Color test</source>
+        <translation type="unfinished">Тест цвета</translation>
+    </message>
+    <message>
+        <location filename="../window.cpp" line="112"/>
+        <source>Zone test</source>
+        <translation type="unfinished">Тест зон</translation>
+    </message>
+    <message>
+        <location filename="../window.cpp" line="131"/>
         <source>Area</source>
         <translation type="unfinished">Зона</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="837"/>
+        <location filename="../window.cpp" line="942"/>
         <source>Off</source>
         <translation type="unfinished">Выключено</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="841"/>
+        <location filename="../window.cpp" line="946"/>
         <source>On</source>
         <translation type="unfinished">Включено</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="845"/>
+        <location filename="../window.cpp" line="950"/>
         <source>Error</source>
         <translation type="unfinished">Ошибка</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1265"/>
+        <location filename="../window.cpp" line="1379"/>
         <source>Left</source>
         <translation type="unfinished">X</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1265"/>
+        <location filename="../window.cpp" line="1379"/>
         <source>Top</source>
         <translation type="unfinished">Y</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1265"/>
+        <location filename="../window.cpp" line="1379"/>
         <source>Width</source>
         <translation type="unfinished">Ширина</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1265"/>
+        <location filename="../window.cpp" line="1379"/>
         <source>Heigth</source>
         <translation type="unfinished">Высота</translation>
     </message>
@@ -509,22 +519,22 @@
         <translation type="obsolete">Зона 14</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1201"/>
+        <location filename="../window.cpp" line="1314"/>
         <source>On ambilight</source>
         <translation type="unfinished">Включить</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1204"/>
+        <location filename="../window.cpp" line="1317"/>
         <source>Off ambilight</source>
         <translation type="unfinished">Выключить</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1207"/>
+        <location filename="../window.cpp" line="1320"/>
         <source>&amp;Settings</source>
         <translation type="unfinished">&amp;Настройки</translation>
     </message>
     <message>
-        <location filename="../window.cpp" line="1210"/>
+        <location filename="../window.cpp" line="1323"/>
         <source>&amp;Quit</source>
         <translation type="unfinished">&amp;Выход</translation>
     </message>

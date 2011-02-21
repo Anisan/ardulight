@@ -99,6 +99,8 @@ private slots:
     void zoneRecalc();
     void switchAmbilight();
     void switchMode();
+    void TestColor();
+    void TestZone();
 
 private:
     GlobalShortcutManager *hotkeyAmbilight;
