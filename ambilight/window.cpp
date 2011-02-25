@@ -487,6 +487,14 @@ void Window::GetPix(QRect rect, int brightness)
   int Green=0;
   int Blue=0;
 
+  //v1.1.5 - не проводить вычисления если размер области нулевой
+ if ((rect.height()==0) || (rect.width()==0))
+  {
+  ba->append(Red);
+  ba->append(Green); //добавляем в буфер
+  ba->append(Blue);
+  return;
+ }
   //int screen = screenComboBox->currentIndex();
  // QImage img = QPixmap::grabWindow(QApplication::desktop()->screen(screen) ->winId(),rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height()).toImage();
 //  QImage img = originalPixmap.copy(rect).toImage();
