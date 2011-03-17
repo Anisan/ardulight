@@ -101,6 +101,7 @@ private slots:
     void switchMode();
     void TestColor();
     void TestZone();
+    void checkSDK();
 
 private:
     GlobalShortcutManager *hotkeyAmbilight;
@@ -139,6 +140,7 @@ private:
     void refreshAmbilightEvaluated(double updateResultMs);
     void writePort();
     void nextWork();
+    void setSDK(QString status);
 
 
     QComboBox *modeComboBox;
