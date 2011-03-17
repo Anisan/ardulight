@@ -186,14 +186,45 @@ Window::Window()
     connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
             this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
 
-
      trayIcon->show();
 
 
       originalPixmap = QPixmap();
      shootScreen();
+     checkSDK();
 }
 //! [0]
+
+
+// v1.1.6 SDK
+void Window::checkSDK()
+{
+    QFile file("status");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QByteArray read = file.readAll();
+        file.close();
+        QString status = QString::fromUtf8(read.data(), read.size());
+       if (status=="off")  off_ambiligth();
+       if (status=="ambilight" &&  modeComboBox->currentIndex()!=0)   { modeComboBox->setCurrentIndex(0);on_ambiligth();};
+       if (status=="backlight" &&  modeComboBox->currentIndex()!=1)   { modeComboBox->setCurrentIndex(1);on_ambiligth();};
+       if (status=="moodlamp" &&  modeComboBox->currentIndex()!=2) { modeComboBox->setCurrentIndex(2);on_ambiligth();};
+   }
+    if (!this->isHidden())
+     QTimer::singleShot(5000, this, SLOT(checkSDK()));
+    else
+     QTimer::singleShot(2000, this, SLOT(checkSDK()));
+}
+
+void Window::setSDK(QString status)
+{
+    QFile file("status");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+             return;
+   file.write(status.toUtf8());
+   file.close();
+
+}
 
 void Window::readSettings()
 {
@@ -201,13 +232,14 @@ void Window::readSettings()
    // QSettings settings("EraserSoft", "Ambiligth");
 
     modeComboBox->setCurrentIndex( settings->value("WorkMode",0).toInt());
+    onAmbiligth = settings->value("onAmbilight",false).toBool();
      //v 1.1.2 auto start mode
     modeStartComboBox->setCurrentIndex( settings->value("StartMode",0).toInt());
     if (modeStartComboBox->currentIndex()<3)
        modeComboBox->setCurrentIndex(modeStartComboBox->currentIndex());
     changeMode();
 
-   onAmbiligth = settings->value("onAmbilight",false).toBool();
+
    onAmbiligthCheckBox->setChecked(settings->value("onAmbilight",false).toBool());
    delaySpinBox->setValue(settings->value("Delay",40).toInt());
    channelSpinBox->setValue(settings->value("Channels",24).toInt());
@@ -1259,12 +1291,15 @@ void  Window::on_ambiligth()
     {
     case 0:
          shootScreen();
+         setSDK("ambilight");
         break;
     case 1:
        backLight();
+       setSDK("backlight");
         break;
     case 2:
         moodLamp();
+        setSDK("moodlamp");
         break;
     }
 
@@ -1275,7 +1310,7 @@ void  Window::off_ambiligth()
      setIcon(1);
      onAction->setEnabled(true);
      offAction->setEnabled(false);
-
+     setSDK("off");
      onAmbiligth = false;
 }
 
@@ -1290,6 +1325,7 @@ void Window::changeMode()
         redSlider->setEnabled(true);
         greenSlider->setEnabled(true);
         blueSlider->setEnabled(true);
+        if (onAmbiligth) setSDK("ambilight");
         break;
     case 1:
         thresholdSlider->setEnabled(false);
@@ -1298,6 +1334,7 @@ void Window::changeMode()
         redSlider->setEnabled(true);
         greenSlider->setEnabled(true);
         blueSlider->setEnabled(true);
+        if (onAmbiligth) setSDK("backlight");
         break;
     case 2:
         thresholdSlider->setEnabled(false);
@@ -1306,6 +1343,7 @@ void Window::changeMode()
         redSlider->setEnabled(false);
         greenSlider->setEnabled(false);
         blueSlider->setEnabled(false);
+        if (onAmbiligth) setSDK("moodlamp");
         break;
     }
 
