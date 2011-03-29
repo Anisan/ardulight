@@ -1,4 +1,4 @@
-#summary Sketch для Carduino/Arduino
+#summary Sketch для Carduino/Arduino (4 зоны)
 
 = Sketch для Carduino/Arduino =
 
