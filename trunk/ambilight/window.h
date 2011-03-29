@@ -102,6 +102,7 @@ private slots:
     void TestColor();
     void TestZone();
     void checkSDK();
+    void viewWindow();
 
 private:
     GlobalShortcutManager *hotkeyAmbilight;
@@ -185,13 +186,23 @@ private:
     QLabel *thresholdLabel;
     QLabel *brightnessLabel;
     QLabel *saturationLabel;
+    QLabel *contrastLabel;
     QLabel *redLabel;
     QLabel *greenLabel;
     QLabel *blueLabel;
 
+    QLabel *thresholdTLabel;
+    QLabel *brightnessTLabel;
+    QLabel *saturationTLabel;
+    QLabel *contrastTLabel;
+    QLabel *redTLabel;
+    QLabel *greenTLabel;
+    QLabel *blueTLabel;
+
     QSlider *thresholdSlider;
     QSlider *brightnessSlider;
     QSlider *saturationSlider;
+    QSlider *contrastSlider;
     QSlider *redSlider;
     QSlider *greenSlider;
     QSlider *blueSlider;
