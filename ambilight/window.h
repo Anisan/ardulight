@@ -103,6 +103,7 @@ private slots:
     void TestZone();
     void checkSDK();
     void viewWindow();
+    void gammaChange();
 
 private:
     GlobalShortcutManager *hotkeyAmbilight;
@@ -137,7 +138,6 @@ private:
     void createZoneTab();
     void updateScreenshotLabel();
     void GetPix(QRect rect,int brightness);
-    int IntToByte(int i);
     void refreshAmbilightEvaluated(double updateResultMs);
     void writePort();
     void nextWork();
@@ -164,6 +164,8 @@ private:
     QLabel *comLabel;
     QComboBox *comComboBox;
 
+    QLabel *colorTestLabel;
+    QLabel *zoneTestLabel;
 
     QComboBox * brComboBox;
     QComboBox * dbComboBox;
@@ -187,6 +189,7 @@ private:
     QLabel *brightnessLabel;
     QLabel *saturationLabel;
     QLabel *contrastLabel;
+    QLabel *gammaLabel;
     QLabel *redLabel;
     QLabel *greenLabel;
     QLabel *blueLabel;
@@ -195,6 +198,7 @@ private:
     QLabel *brightnessTLabel;
     QLabel *saturationTLabel;
     QLabel *contrastTLabel;
+    QLabel *gammaTLabel;
     QLabel *redTLabel;
     QLabel *greenTLabel;
     QLabel *blueTLabel;
@@ -203,6 +207,7 @@ private:
     QSlider *brightnessSlider;
     QSlider *saturationSlider;
     QSlider *contrastSlider;
+    QSlider *gammaSlider;
     QSlider *redSlider;
     QSlider *greenSlider;
     QSlider *blueSlider;

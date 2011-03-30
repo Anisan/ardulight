@@ -111,7 +111,9 @@ Window::Window()
      QPushButton *colorTestButton = new QPushButton(tr("Color test"));
      QPushButton *zoneTestButton = new QPushButton(tr("Zone test"));
      testLayout->addWidget(colorTestButton);
+     testLayout->addWidget(colorTestLabel = new QLabel("..."));
      testLayout->addWidget(zoneTestButton);
+     testLayout->addWidget(zoneTestLabel = new QLabel("..."));
       hardLayout->addWidget(testGroupBox);
 
      saveAdv = new QPushButton(tr("Apply"));
@@ -171,6 +173,7 @@ Window::Window()
     connect(brightnessSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(saturationSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(contrastSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
+    connect(gammaSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(redSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(greenSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
     connect(blueSlider,SIGNAL(sliderReleased()),this,SLOT(saveColorSettings()));
@@ -374,6 +377,7 @@ void Window::saveColorSettings()
     settings->setValue(QString("Brightness_%1").arg(modeComboBox->currentIndex()), brightnessSlider->value());
     settings->setValue(QString("Saturation_%1").arg(modeComboBox->currentIndex()), saturationSlider->value());
     settings->setValue(QString("Contrast_%1").arg(modeComboBox->currentIndex()), contrastSlider->value());
+    settings->setValue(QString("Gamma_%1").arg(modeComboBox->currentIndex()), gammaSlider->value());
     settings->setValue(QString("Red_%1").arg(modeComboBox->currentIndex()), redSlider->value());
     settings->setValue(QString("Green_%1").arg(modeComboBox->currentIndex()), greenSlider->value());
     settings->setValue(QString("Blue_%1").arg(modeComboBox->currentIndex()), blueSlider->value());
@@ -508,15 +512,6 @@ void Window::closePort()
 }
 
 //*******************************************************************
-int Window::IntToByte(int i)
-{
-   if (i > 255) return 255;
-     else
-         if (i < thresholdSlider->value()) return 0;
-         else
-         return i;
-}
-
 int BLimit(int b)
 {
     if (b < 0)
@@ -527,22 +522,23 @@ int BLimit(int b)
       return b;
  }
 
-
+double Power(double Base,double Exponent)
+{
+    return exp(Exponent * log(Base));
+}
 
 void Window::GetPix(QRect rect, int brightness)
 {
   int Red=0;
   int Green=0;
   int Blue=0;
-
-
   //v1.1.5 - не проводить вычислени€ если размер области нулевой
  if ((rect.height()==0) || (rect.width()==0))
   {
-  ba->append(Red);
-  ba->append(Green); //добавл€ем в буфер
-  ba->append(Blue);
-  return;
+      ba->append(Red);
+      ba->append(Green); //добавл€ем в буфер
+      ba->append(Blue);
+      return;
  }
 
  // .v1.1.7 contrast
@@ -556,6 +552,14 @@ void Window::GetPix(QRect rect, int brightness)
    else
      vd = 1 - (sqrt(-contrast_value) / 10.0);
 
+   // .v1.1.8 gamma
+   //{0.0 < L < 7.0}
+   double L=gammaSlider->value()/10.0;
+   int  GT[255];
+    GT[0]= 0;
+   for (int X= 1; X<=255;++X)
+     GT[X] = BLimit(255 * Power(X / 255.0, 1 / L));
+
   QImage img = originalPixmap.copy(rect).toImage();
   for (int y=0; y< rect.height();y++){
       for (int x=0; x<rect.width(); x++){
@@ -563,17 +567,24 @@ void Window::GetPix(QRect rect, int brightness)
           int sRed = BLimit(mR + trunc((pix.red() - mR) * vd));
           int sGreen = BLimit(mG + trunc((pix.green() - mG) * vd));   // контрастность
           int sBlue = BLimit(mB + trunc((pix.blue() - mB) * vd));
+
+          sRed = GT[sRed];
+          sGreen = GT[sGreen];
+          sBlue = GT[sBlue];
+
 //          pix.setRed(sRed);
 //          pix.setBlue(sBlue);         // это дл€ проверки
 //          pix.setGreen(sGreen);
 //          img.setPixel(x,y,pix.rgb());
+
           Red += sRed;
           Green += sGreen;         //суммируем все пиксели
           Blue += sBlue;
        }
   }
-  //QPainter p(&originalPixmap); // и это тоже
-  //p.drawImage(rect.x(),rect.y(),img);
+//  QPainter p(&originalPixmap); // и это тоже
+//  p.drawImage(rect.x(),rect.y(),img);
+
   int z =rect.width()*rect.height();
   Red=Red/z;
   Green=Green/ z;   //вычислим среднее значение дл€ каждого канала
@@ -609,9 +620,19 @@ void Window::GetPix(QRect rect, int brightness)
 
    // v1.0.6 €ркость по зонам
   int TrackBar_Light =255-brightnessSlider->value()/100.0*brightness;
-  Red=IntToByte(Red-(qFloor(Red*TrackBar_Light)/ 255.0));
-  Green=IntToByte(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//€ркость
-  Blue=IntToByte(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
+  Red=BLimit(Red-(qFloor(Red*TrackBar_Light)/ 255.0));
+  Green=BLimit(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//€ркость
+  Blue=BLimit(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
+
+  // v.1.1.8
+  int  threshold = thresholdSlider->value();
+  if ((0.299*Red + 0.587*Green + 0.114*Blue) <= threshold)
+  {
+      Red=0;
+      Green=0;
+      Blue=0;
+  }
+
   ba->append(Red);
   ba->append(Green); //добавл€ем в буфер
   ba->append(Blue);
@@ -702,9 +723,9 @@ void Window::backLight()
     Blue=(Blue+((Blue / 128.0) * TrackBar_Sol));
 
     int TrackBar_Light =255-brightnessSlider->value();
-   Red=IntToByte(Red-(qFloor(Red*TrackBar_Light)/ 255.0));
-   Green=IntToByte(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//€ркость
-   Blue=IntToByte(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
+   Red=BLimit(Red-(qFloor(Red*TrackBar_Light)/ 255.0));
+   Green=BLimit(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//€ркость
+   Blue=BLimit(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
 
     int channels = channelSpinBox->value();
     ba->clear();
@@ -744,6 +765,8 @@ int newBlue=0;
 int Red=0;
 int Green=0;
 int Blue=0;
+int speed=0;
+int step =0;
 
 void Window::moodLamp()
 {
@@ -753,13 +776,13 @@ void Window::moodLamp()
   //   qDebug() <<  Red <<" " << Green  <<" "<< Blue;
  //  qDebug() << "new " << newRed <<" " << newGreen  <<" "<< newBlue;
 
-
     if ((Red==newRed) && (Green==newGreen) && (Blue==newBlue))
     {
         newRed = random(255);
         newGreen =random(255);
         newBlue =random(255);
-        int sw = random(8);
+        speed = random(20);
+        int sw = random(6);
         switch (sw)
         {
             case 0:             newRed=0;            break;
@@ -771,31 +794,39 @@ void Window::moodLamp()
         }
     }
 
-    if(newRed!=Red) { if (Red>newRed) --Red; else ++Red;}
-    if(newGreen!=Green)  {if (Green>newGreen) --Green; else ++Green;}
-    if(newBlue!=Blue)  {if (Blue>newBlue) --Blue; else ++Blue;}
 
-    int TrackBar_Sol = saturationSlider->value();
-   int prRed=(Red+((Red / 128.0) * TrackBar_Sol));
-   int prGreen=(Green+((Green / 128.0) * TrackBar_Sol));  // насыщенность
-   int prBlue=(Blue+((Blue / 128.0) * TrackBar_Sol));
 
-    int TrackBar_Light =255-brightnessSlider->value();
-   prRed=IntToByte(prRed-(qFloor(prRed*TrackBar_Light)/ 255.0));
-   prGreen=IntToByte(prGreen-(qFloor(prGreen*TrackBar_Light)/ 255.0));//€ркость
-   prBlue=IntToByte(prBlue-(qFloor(prBlue*TrackBar_Light)/ 255.0));
+       int TrackBar_Sol = saturationSlider->value();
+       int prRed=(Red+((Red / 128.0) * TrackBar_Sol));
+       int prGreen=(Green+((Green / 128.0) * TrackBar_Sol));  // насыщенность
+       int prBlue=(Blue+((Blue / 128.0) * TrackBar_Sol));
 
-    int channels = channelSpinBox->value();
-    ba->clear();
-    ba->append(255); // префикс
-    for (int i=0;i<channels;i=i+3)
-    {
-        ba->append(prRed);
-        ba->append(prGreen);
-        ba->append(prBlue);
-    }
+        int TrackBar_Light =255-brightnessSlider->value();
+       prRed=BLimit(prRed-(qFloor(prRed*TrackBar_Light)/ 255.0));
+       prGreen=BLimit(prGreen-(qFloor(prGreen*TrackBar_Light)/ 255.0));//€ркость
+       prBlue=BLimit(prBlue-(qFloor(prBlue*TrackBar_Light)/ 255.0));
 
-   writePort();
+        int channels = channelSpinBox->value();
+        ba->clear();
+        ba->append(255); // префикс
+        for (int i=0;i<channels;i=i+3)
+        {
+            ba->append(prRed);
+            ba->append(prGreen);
+            ba->append(prBlue);
+        }
+
+       writePort();
+
+       if (step>=speed)
+       {
+           step=0;
+           if(newRed!=Red) { if (Red>newRed) --Red; else ++Red;}
+           if(newGreen!=Green)  {if (Green>newGreen) --Green; else ++Green;}
+           if(newBlue!=Blue)  {if (Blue>newBlue) --Blue; else ++Blue;}
+        }
+        else
+            ++step;
 
    refreshAmbilightEvaluated(t.elapsed());
 
@@ -829,8 +860,7 @@ void Window::nextWork()
         QTimer::singleShot(delaySpinBox->value(), this, SLOT(backLight()));
         break;
     case 2:
-        // частоту увеличиваем на 10, иначе слишком быстро мен€ютс€ цвета
-        QTimer::singleShot(delaySpinBox->value()+10, this, SLOT(moodLamp()));
+        QTimer::singleShot(delaySpinBox->value(), this, SLOT(moodLamp()));
         break;
     }
 
@@ -855,6 +885,7 @@ void  Window::TestColor()
         ba->append(n);
         ba->append(n);
     }
+    colorTestLabel->setText(tr("Red"));
     writePort();
    Sleep(1000);
     ba->clear();
@@ -865,6 +896,7 @@ void  Window::TestColor()
         ba->append(f);
         ba->append(n);
     }
+    colorTestLabel->setText(tr("Green"));
     writePort();
     Sleep(1000);
     ba->clear();
@@ -875,6 +907,7 @@ void  Window::TestColor()
         ba->append(n);
         ba->append(f);
     }
+    colorTestLabel->setText(tr("Blue"));
     writePort();
     Sleep(1000);
     ba->clear();
@@ -885,7 +918,10 @@ void  Window::TestColor()
         ba->append(f);
         ba->append(f);
     }
+    colorTestLabel->setText(tr("White"));
     writePort();
+    Sleep(1000);
+    colorTestLabel->setText(tr("..."));
 
 }
 
@@ -916,9 +952,11 @@ void  Window::TestZone()
                 ba->append(n);
             }
         }
+        zoneTestLabel->setText(QString("%1 %2").arg(tr("Area ")).arg(i+1));
         writePort();
         Sleep(1000);
     }
+    zoneTestLabel->setText("...");
 
 
 
@@ -1275,6 +1313,10 @@ void Window::createColorGroupBox()
     contrastSlider = new QSlider(Qt::Horizontal);
     contrastSlider->setRange(-100,100);
 
+    gammaSlider = new QSlider(Qt::Horizontal);
+    gammaSlider->setRange(0,40);
+
+
     thresholdSlider = new QSlider(Qt::Horizontal);
     thresholdSlider->setRange(0,255);
 
@@ -1289,18 +1331,21 @@ void Window::createColorGroupBox()
     messageLayout->addWidget(contrastTLabel = new QLabel(tr("Contrast")), 2, 0);
     messageLayout->addWidget(contrastSlider, 2, 1);
     messageLayout->addWidget(contrastLabel, 2, 2);
-    messageLayout->addWidget(redTLabel = new QLabel(tr("Hue red")), 3, 0);
-    messageLayout->addWidget(redSlider, 3, 1);
-    messageLayout->addWidget(redLabel, 3, 2);
-    messageLayout->addWidget(greenTLabel = new QLabel(tr("Hue green")), 4, 0);
-    messageLayout->addWidget(greenSlider, 4, 1);
-    messageLayout->addWidget(greenLabel, 4, 2);
-    messageLayout->addWidget(blueTLabel = new QLabel(tr("Hue blue")), 5, 0);
-    messageLayout->addWidget(blueSlider, 5, 1);
-    messageLayout->addWidget(blueLabel, 5, 2);
-    messageLayout->addWidget(thresholdTLabel = new QLabel(tr("Threshold")), 6, 0);
-    messageLayout->addWidget(thresholdSlider, 6, 1);
-    messageLayout->addWidget(thresholdLabel, 6, 2);
+    messageLayout->addWidget(gammaTLabel = new QLabel(tr("Gamma")), 3, 0);
+    messageLayout->addWidget(gammaSlider, 3, 1);
+    messageLayout->addWidget(gammaLabel = new QLabel("0"), 3, 2);
+    messageLayout->addWidget(redTLabel = new QLabel(tr("Hue red")), 4, 0);
+    messageLayout->addWidget(redSlider, 4, 1);
+    messageLayout->addWidget(redLabel, 4, 2);
+    messageLayout->addWidget(greenTLabel = new QLabel(tr("Hue green")), 5, 0);
+    messageLayout->addWidget(greenSlider, 5, 1);
+    messageLayout->addWidget(greenLabel, 5, 2);
+    messageLayout->addWidget(blueTLabel = new QLabel(tr("Hue blue")), 6, 0);
+    messageLayout->addWidget(blueSlider, 6, 1);
+    messageLayout->addWidget(blueLabel, 6, 2);
+    messageLayout->addWidget(thresholdTLabel = new QLabel(tr("Threshold")), 7, 0);
+    messageLayout->addWidget(thresholdSlider, 7, 1);
+    messageLayout->addWidget(thresholdLabel, 7, 2);
 
     messageLayout->setColumnMinimumWidth(2,20);
 
@@ -1308,6 +1353,7 @@ void Window::createColorGroupBox()
     connect(brightnessSlider, SIGNAL(valueChanged(int)), brightnessLabel,  SLOT(setNum(int)));
     connect(saturationSlider, SIGNAL(valueChanged(int)), saturationLabel,  SLOT(setNum(int)));
     connect(contrastSlider, SIGNAL(valueChanged(int)), contrastLabel,  SLOT(setNum(int)));
+    connect(gammaSlider, SIGNAL(valueChanged(int)), this,  SLOT(gammaChange()));
     connect(redSlider, SIGNAL(valueChanged(int)), redLabel,  SLOT(setNum(int)));
     connect(greenSlider, SIGNAL(valueChanged(int)), greenLabel,  SLOT(setNum(int)));
     connect(blueSlider, SIGNAL(valueChanged(int)), blueLabel,  SLOT(setNum(int)));
@@ -1316,6 +1362,11 @@ void Window::createColorGroupBox()
     //messageLayout->setColumnStretch(2,2);
    // messageLayout->setRowStretch(5,1);
     colorGroupBox->setLayout(messageLayout);
+}
+
+void Window::gammaChange()
+{
+    gammaLabel->setText(QString("%1").arg(gammaSlider->value()/10.0));
 }
 
 void  Window::on_ambiligth()
@@ -1361,6 +1412,7 @@ void Window::changeMode()
         brightnessSlider->setVisible(true);
         saturationSlider->setVisible(true);
         contrastSlider->setVisible(true);
+        gammaSlider->setVisible(true);
         redSlider->setVisible(true);
         greenSlider->setVisible(true);
         blueSlider->setVisible(true);
@@ -1371,6 +1423,7 @@ void Window::changeMode()
         brightnessSlider->setVisible(true);
         saturationSlider->setVisible(true);
         contrastSlider->setVisible(false);
+        gammaSlider->setVisible(false);
         redSlider->setVisible(true);
         greenSlider->setVisible(true);
         blueSlider->setVisible(true);
@@ -1381,6 +1434,7 @@ void Window::changeMode()
         brightnessSlider->setVisible(true);
         saturationSlider->setVisible(true);
         contrastSlider->setVisible(false);
+        gammaSlider->setVisible(false);
         redSlider->setVisible(false);
         greenSlider->setVisible(false);
         blueSlider->setVisible(false);
@@ -1393,6 +1447,8 @@ void Window::changeMode()
     saturationTLabel->setVisible(saturationSlider->isVisible());
     contrastLabel->setVisible(contrastSlider->isVisible());
     contrastTLabel->setVisible(contrastSlider->isVisible());
+    gammaLabel->setVisible(gammaSlider->isVisible());
+    gammaTLabel->setVisible(gammaSlider->isVisible());
     redLabel->setVisible(redSlider->isVisible());
     redTLabel->setVisible(redSlider->isVisible());
     greenLabel->setVisible(greenSlider->isVisible());
@@ -1403,6 +1459,7 @@ void Window::changeMode()
     brightnessSlider->setValue(settings->value(QString("Brightness_%1").arg(modeComboBox->currentIndex()), 192).toInt());
     saturationSlider->setValue(settings->value(QString("Saturation_%1").arg(modeComboBox->currentIndex()), 96).toInt());
     contrastSlider->setValue(settings->value(QString("Contrast_%1").arg(modeComboBox->currentIndex()), 0).toInt());
+    gammaSlider->setValue(settings->value(QString("Gamma_%1").arg(modeComboBox->currentIndex()), 10).toInt());
     redSlider->setValue(settings->value(QString("Red_%1").arg(modeComboBox->currentIndex()), 128).toInt());
     greenSlider->setValue(settings->value(QString("Green_%1").arg(modeComboBox->currentIndex()), 128).toInt());
     blueSlider->setValue(settings->value(QString("Blue_%1").arg(modeComboBox->currentIndex()), 128).toInt());
