@@ -104,6 +104,7 @@ private slots:
     void checkSDK();
     void viewWindow();
     void gammaChange();
+    void calcColorTable();
 
 private:
     GlobalShortcutManager *hotkeyAmbilight;
@@ -142,6 +143,7 @@ private:
     void writePort();
     void nextWork();
     void setSDK(QString status);
+
 
 
     QComboBox *modeComboBox;

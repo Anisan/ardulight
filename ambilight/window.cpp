@@ -382,6 +382,8 @@ void Window::saveColorSettings()
     settings->setValue(QString("Green_%1").arg(modeComboBox->currentIndex()), greenSlider->value());
     settings->setValue(QString("Blue_%1").arg(modeComboBox->currentIndex()), blueSlider->value());
     settings->setValue(QString("Threshold_%1").arg(modeComboBox->currentIndex()), thresholdSlider->value());
+
+    calcColorTable();
 }
 
 void Window::saveModeSettings()
@@ -527,11 +529,40 @@ double Power(double Base,double Exponent)
     return exp(Exponent * log(Base));
 }
 
+//v.1.1.9 оптимизация
+// используем таблицы предрасчитанных цветов
+ int GammaT[255];
+ int ContractT[255];
+
+ void Window::calcColorTable()
+{
+    // .v1.1.8 gamma
+    //{0.0 < L < 7.0}
+    double L=gammaSlider->value()/10.0;
+    GammaT[0]= 0;
+    for (int X= 1; X<=255;++X)
+      GammaT[X] = BLimit(255 * Power(X / 255.0, 1 / L));
+
+    // .v1.1.7 contrast
+    float vd;
+    int mC = 128;
+    int contrast_value = contrastSlider->value();
+    if (contrast_value > 0)
+        vd = 1 + (contrast_value / 10.0);
+      else
+        vd = 1 - (sqrt(-contrast_value) / 10.0);
+      for (int X= 0; X<=255;++X)
+        ContractT[X] = BLimit(mC + trunc((X - mC) * vd));
+}
+
 void Window::GetPix(QRect rect, int brightness)
 {
   int Red=0;
   int Green=0;
   int Blue=0;
+
+  QPainter p(&originalPixmap);
+
   //v1.1.5 - не проводить вычисления если размер области нулевой
  if ((rect.height()==0) || (rect.width()==0))
   {
@@ -541,82 +572,47 @@ void Window::GetPix(QRect rect, int brightness)
       return;
  }
 
- // .v1.1.7 contrast
- int mR = 128;
- int mG= 128;
- int mB= 128;
- float vd;
-  int contrast_value = contrastSlider->value();
- if (contrast_value > 0)
-     vd = 1 + (contrast_value / 10.0);
-   else
-     vd = 1 - (sqrt(-contrast_value) / 10.0);
-
-   // .v1.1.8 gamma
-   //{0.0 < L < 7.0}
-   double L=gammaSlider->value()/10.0;
-   int  GT[255];
-    GT[0]= 0;
-   for (int X= 1; X<=255;++X)
-     GT[X] = BLimit(255 * Power(X / 255.0, 1 / L));
 
   QImage img = originalPixmap.copy(rect).toImage();
+
   for (int y=0; y< rect.height();y++){
       for (int x=0; x<rect.width(); x++){
           QColor pix = img.pixel(x,y);
-          int sRed = BLimit(mR + trunc((pix.red() - mR) * vd));
-          int sGreen = BLimit(mG + trunc((pix.green() - mG) * vd));   // контрастность
-          int sBlue = BLimit(mB + trunc((pix.blue() - mB) * vd));
+          int sRed = ContractT[pix.red()];
+          int sGreen = ContractT[pix.green()];   // контрастность
+          int sBlue = ContractT[pix.blue()];
 
-          sRed = GT[sRed];
-          sGreen = GT[sGreen];
-          sBlue = GT[sBlue];
+          sRed = GammaT[sRed];
+          sGreen = GammaT[sGreen]; // гамма
+          sBlue = GammaT[sBlue];
+
+          Red += sRed;
+          Green += sGreen;         //суммируем все пиксели
+          Blue += sBlue;
 
 //          pix.setRed(sRed);
 //          pix.setBlue(sBlue);         // это для проверки
 //          pix.setGreen(sGreen);
 //          img.setPixel(x,y,pix.rgb());
-
-          Red += sRed;
-          Green += sGreen;         //суммируем все пиксели
-          Blue += sBlue;
-       }
+        }
   }
-//  QPainter p(&originalPixmap); // и это тоже
-//  p.drawImage(rect.x(),rect.y(),img);
+
+  //p.drawImage(rect.x(),rect.y(),img); // и это тоже
 
   int z =rect.width()*rect.height();
   Red=Red/z;
   Green=Green/ z;   //вычислим среднее значение для каждого канала
   Blue=Blue/z;
 
-  // хз какой вариант шустрее
-// контрастность не очень работает
-//   QPixmap img = originalPixmap.copy(rect);
-//   QPixmap scaledPix = img.scaled(1,1, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-//   QImage im = scaledPix.toImage();
-//   QColor pix = im.pixel(0,0);
-//   Red = pix.red();
-//   Green = pix.green();
-//   Blue = pix.blue();
-//   Red = BLimit(mR + trunc((Red - mR) * vd));
-//   Green = BLimit(mG + trunc((Green - mG) * vd));
-//   Blue = BLimit(mB + trunc((Blue - mB) * vd));
-
    int Average_Pix= qFloor((Red+Green+Blue)/ 3.0); //среднее
-   int TrackBar_Sol = saturationSlider->value();
-   Red=(Red+((Red / 128.0) * TrackBar_Sol));
-   Green=(Green+((Green / 128.0) * TrackBar_Sol));  // насыщенность
-   Blue=(Blue+((Blue / 128.0) * TrackBar_Sol));
+   Red= (Red+((Red / 128.0) * saturationSlider->value()));
+   Green=(Green+((Green / 128.0) * saturationSlider->value()));  // насыщенность
+   Blue= (Blue+((Blue / 128.0) * saturationSlider->value()));
    int  Aver=qFloor((Red + Green + Blue)/ 3.0)- Average_Pix; //разница в уровне после преобразования
 
-   int TrackBar_Red = redSlider->value();
-   int TrackBar_Green = greenSlider->value();
-   int TrackBar_Blue = blueSlider->value();
-
-   Red=(Red*( TrackBar_Red / 128.0))-Aver;
-   Green=(Green*( TrackBar_Green / 128.0))-Aver;
-   Blue=(Blue*( TrackBar_Blue / 128.0))-Aver;
+   Red=Red*( redSlider->value() / 128.0) - Aver;
+   Green=Green*(  greenSlider->value() / 128.0) - Aver; // оттенки
+   Blue=Blue*( blueSlider->value() / 128.0) - Aver;
 
    // v1.0.6 яркость по зонам
   int TrackBar_Light =255-brightnessSlider->value()/100.0*brightness;
@@ -624,7 +620,7 @@ void Window::GetPix(QRect rect, int brightness)
   Green=BLimit(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//яркость
   Blue=BLimit(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
 
-  // v.1.1.8
+  // v.1.1.8 fix порогового значения
   int  threshold = thresholdSlider->value();
   if ((0.299*Red + 0.587*Green + 0.114*Blue) <= threshold)
   {
@@ -641,7 +637,6 @@ void Window::GetPix(QRect rect, int brightness)
      if (!this->isHidden())
           if (viewZoneCheckBox->isChecked())
               {
-                 QPainter p(&originalPixmap);
                   p.fillRect(rect,QColor(Red,Green,Blue));
               }
 }
@@ -1358,6 +1353,9 @@ void Window::createColorGroupBox()
     connect(greenSlider, SIGNAL(valueChanged(int)), greenLabel,  SLOT(setNum(int)));
     connect(blueSlider, SIGNAL(valueChanged(int)), blueLabel,  SLOT(setNum(int)));
     connect(thresholdSlider, SIGNAL(valueChanged(int)), thresholdLabel,  SLOT(setNum(int)));
+
+    connect(contrastSlider, SIGNAL(valueChanged(int)), this,  SLOT(calcColorTable()));
+    connect(gammaSlider, SIGNAL(valueChanged(int)), this,  SLOT(calcColorTable()));
 
     //messageLayout->setColumnStretch(2,2);
    // messageLayout->setRowStretch(5,1);
