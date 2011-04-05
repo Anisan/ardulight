@@ -1,0 +1,225 @@
+#summary Sketch для Carduino/Arduino (4 зоны)
+
+= Sketch для Carduino/Arduino =
+Скетч на 30 каналов с функцией "лампы настроения"
+
+{{{
+
+//нужно нужно заменить 60 на по возможности меньшее значение. 
+//Начиная с какого-то значения, программу начнет не по-деццки глючить. 
+//Нужно выбрать значение процентов на 10 больше, чем пороговое. Чем меньше значение, тем выше частота мигания светодиодов.
+#define TCNT2_Const 256-15 //256-8 
+
+#define BrightnessSize 30 //число каналов 
+
+unsigned long blank=0; //таймер простоя  
+
+uint8_t volatile PWM_Counter=0; 
+uint8_t color[BrightnessSize]; 
+
+int mode = 0;
+
+//Текущий цвет
+int currentColorR = 0;
+int currentColorG = 0;
+int currentColorB = 0;
+
+//новый цвет
+int nextColorR = 0;
+int nextColorG = 0;
+int nextColorB = 0;
+
+int R,G,B,switchTime;
+
+void setup()   
+{  
+        pinMode(10, OUTPUT);   //SS SPI вывод для управления защелкой 
+        pinMode(11, OUTPUT);    // SPI DATA 
+        pinMode(13, OUTPUT);   // SPI Clock 
+        digitalWrite(10,LOW); 
+        digitalWrite(11,LOW); 
+        digitalWrite(13,LOW); 
+        SPSR = (1<<SPI2X);       // SPI set clock rate fck/2 
+        SPCR = (1<<SPE)|(1<<MSTR); // Enable SPI, Master 
+         
+    for (int i=0;i<BrightnessSize;i++) //обнулить массив 
+    { 
+        color[i]=0; 
+    } 
+
+    Serial.begin(115200); 
+
+    TIMSK2 &= ~(1<<TOIE2); //разрешения прерывания по переполнению таймера/счетчика Т2   
+    TCCR2A &= ~((1<<WGM21) | (1<<WGM20));// Режим работы таймера/счетчика  
+    TCCR2B &= ~(1<<WGM22);// Режим работы таймера/счетчика  
+    TCCR2B |= (1<<CS22); //установка предделителя 64 
+    ASSR &= ~(1<<AS2);  //Выбор источника синхронизации таймера если AS2=0 от системного генератора  
+    TCNT2 = TCNT2_Const; //  16000000/256/100/64=8 tcnt2=256-8=248.      
+    TIMSK2 |= (1<<TOIE2);//Разрешение прерывания по переполнению Т2. 
+    sei();  
+}  
+
+void loop()   
+{  
+  if (Serial.available() >= BrightnessSize)   
+  {   
+      if (Serial.read() == 255)  //проверка прификса        
+        { 
+            for (int i = 0; i < BrightnessSize; i++)   
+             {                  
+               color[i] = Serial.read();  // прочитать данные о цветах из порта в массив  
+             }          
+             blank=0;  
+             mode = 0;
+        }  
+  } else { if (mode==0)
+    {
+      if(blank>50000) { 
+        blank=0;
+        mode =1; 
+        for (byte i = 0; i < BrightnessSize; i++)  color[i] = 0;
+      }  
+      blank++;  
+    }
+    if (mode == 1)
+    {
+      if(currentColorR==nextColorR && currentColorG==nextColorG && currentColorB==nextColorB)
+      {
+        //Генерируем новый цвет, исключая похожий на белый, иначе генерируем еще раз
+        do {
+          nextColorR = random(256);
+          nextColorG = random(256);
+          nextColorB = random(256);
+        } 
+        while(abs(nextColorR-nextColorG)<50 && abs(nextColorR-nextColorB)<50);
+        //Время перехода
+        switchTime = random(10,50);
+
+        //Случайно отключаем один из каналов
+        //1,2,3 - красный, зеленый, синий соответственно.
+        switch(random(1,9)) {
+        case 1:
+          nextColorR = 0;
+          break;
+        case 2:
+          nextColorG = 0;
+          break;
+        case 3:
+          nextColorB = 0;
+          break;
+        case 4:
+          nextColorB = 0;
+          nextColorR = 0;
+          break;
+        case 5:
+          nextColorB = 0;
+          nextColorG = 0;
+          break;
+        case 6:
+          nextColorR = 0;
+          nextColorG = 0;
+          
+        }
+      }
+
+
+
+
+      //Выясняем на каком канале увеличивать яркость, а на каком уменьшать
+      if(nextColorR>currentColorR) R=1; 
+      else R=-1;
+      if(nextColorG>currentColorG) G=1; 
+      else G=-1;
+      if(nextColorB>currentColorB) B=1; 
+      else B=-1;
+
+      //Переходим к нужному цвету
+
+      if(currentColorR!=nextColorR){
+        currentColorR+=R;
+      }
+      if(currentColorG!=nextColorG){
+        currentColorG+=G;
+      }
+      if(currentColorB!=nextColorB){
+        currentColorB+=B;
+      }
+
+      for (int i=0;i<BrightnessSize;i=i+3)
+      {
+        color[i]=currentColorR;
+        color[i+1]=currentColorG;
+        color[i+2]=currentColorB;
+      }
+      delay(switchTime);
+
+    }
+         }    
+} 
+
+SIGNAL(TIMER2_OVF_vect) 
+{  
+uint8_t PWM_Counter_v=PWM_Counter; // поскольку PWM_Counter объявлена как valotile, обращение к ней - всегда обращение в память. Поэтому создаем локальную копию, она будет храниться в регистре. 
+TCNT2 = TCNT2_Const;  
+uint8_t i = 0;  
+
+uint8_t byte_shift; 
+uint8_t nbit; // делаем переменную для хранения сдвинутого бита, чтобы у компилятора не возникало желания каждый раз в цикле сдвигать 1 на bt бит влево 
+
+byte_shift = 0; 
+
+for (uint8_t bt=0; bt<6; bt++)      
+  {  
+     byte_shift = byte_shift<<1;
+    if(color[i]>PWM_Counter_v) byte_shift|= 1; // тут соответственно использщуем nbit 
+     i++;  
+  } 
+SPDR = byte_shift; //отправляем в шину SPI  
+//************************************** 
+
+byte_shift = 0; 
+for (uint8_t bt=0; bt<6; bt++)      
+  {  
+     byte_shift = byte_shift<<1;
+    if(color[i]>PWM_Counter_v) byte_shift|= 1; // тут соответственно использщуем nbit 
+     i++;  
+  } 
+SPDR = byte_shift; //отправляем в шину SPI  
+//************************************** 
+//************************************** 
+
+byte_shift = 0; 
+for (uint8_t bt=0; bt<6; bt++)      
+  {  
+     byte_shift = byte_shift<<1;
+    if(color[i]>PWM_Counter_v) byte_shift|= 1; // тут соответственно использщуем nbit 
+     i++;  
+  } 
+SPDR = byte_shift; //отправляем в шину SPI  
+//************************************** 
+byte_shift = 0; 
+for (uint8_t bt=0; bt<6; bt++)      
+  {  
+     byte_shift = byte_shift<<1;
+    if(color[i]>PWM_Counter_v) byte_shift|= 1; // тут соответственно использщуем nbit 
+     i++;  
+  } 
+SPDR = byte_shift; //отправляем в шину SPI  
+//************************************** 
+byte_shift = 0; 
+for (uint8_t bt=0; bt<6; bt++)      
+  {  
+     byte_shift = byte_shift<<1;
+    if(color[i]>PWM_Counter_v) byte_shift|= 1; // тут соответственно использщуем nbit 
+     i++;  
+  } 
+SPDR = byte_shift; //отправляем в шину SPI  
+//************************************** 
+
+
+    PORTB |= (1<<PIN2); //формируем положительный импульс защелки 
+        PWM_Counter++; 
+        while(!(SPSR & (1<<SPIF)));   // Ожидание завершения передачи данных 
+    PORTB &= ~(1<<PIN2); 
+} 
+}}}
