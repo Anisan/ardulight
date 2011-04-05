@@ -1,4 +1,4 @@
-#summary Sketch для Carduino/Arduino (4 зоны)
+#summary Sketch для Carduino/Arduino (30 каналов на шифтах)
 
 = Sketch для Carduino/Arduino =
 Скетч на 30 каналов с функцией "лампы настроения"
