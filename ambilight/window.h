@@ -107,6 +107,7 @@ private slots:
     void calcColorTable();
 
 private:
+    bool isWinAPIGrab;
     GlobalShortcutManager *hotkeyAmbilight;
     GlobalShortcutManager *hotkeyMode;
 

@@ -48,6 +48,8 @@
 //#include <qxtglobalshortcut.h>
 #include "globalshortcutmanager.h"
 
+#include "grab\grab_api.h"
+
 #include "delegate.h"
 #include "version.h"
 
@@ -58,6 +60,10 @@
 
 Window::Window()
 {
+
+
+    isWinAPIGrab = false;
+
     qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
 
     // 1.0.6 onTop окно настроек
@@ -202,20 +208,20 @@ Window::Window()
 // v1.1.6 SDK
 void Window::checkSDK()
 {
-    if (onAmbiligth)
-    {
+
     QFile file("status");
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QByteArray read = file.readAll();
         file.close();
         QString status = QString::fromUtf8(read.data(), read.size());
-       if (status=="off")  off_ambiligth();
-       if (status=="ambilight" &&  modeComboBox->currentIndex()!=0)   { modeComboBox->setCurrentIndex(0);on_ambiligth();};
-       if (status=="backlight" &&  modeComboBox->currentIndex()!=1)   { modeComboBox->setCurrentIndex(1);on_ambiligth();};
-       if (status=="moodlamp" &&  modeComboBox->currentIndex()!=2) { modeComboBox->setCurrentIndex(2);on_ambiligth();};
+        //v.1.0.10 fix
+       if (status=="off" && onAmbiligth)  off_ambiligth();
+       if (status=="ambilight" && (!onAmbiligth || modeComboBox->currentIndex()!=0))   { modeComboBox->setCurrentIndex(0);on_ambiligth();};
+       if (status=="backlight" && (!onAmbiligth ||  modeComboBox->currentIndex()!=1))   { modeComboBox->setCurrentIndex(1);on_ambiligth();};
+       if (status=="moodlamp" &&  (!onAmbiligth || modeComboBox->currentIndex()!=2)) { modeComboBox->setCurrentIndex(2);on_ambiligth();};
    }
-}
+
     if (!this->isHidden())
      QTimer::singleShot(5000, this, SLOT(checkSDK()));
     else
@@ -236,6 +242,11 @@ void Window::readSettings()
 {
     qDebug() << " load settings ";
    // QSettings settings("EraserSoft", "Ambiligth");
+
+    //v.1.0.10 расширенна€ опци€, вдруг пригодитс€
+    #ifdef Q_WS_WIN
+        isWinAPIGrab =settings->value("isWinAPIGrab",true).toBool();
+    #endif
 
     modeComboBox->setCurrentIndex( settings->value("WorkMode",0).toInt());
     onAmbiligth = settings->value("onAmbilight",false).toBool();
@@ -642,6 +653,8 @@ void Window::GetPix(QRect rect, int brightness)
 }
 
 
+
+
 ////********************************************************
 void Window::shootScreen()
 {
@@ -661,11 +674,26 @@ void Window::shootScreen()
     int screen = screenComboBox->currentIndex();
     QRect screenres = QApplication::desktop()->screenGeometry(screen);
     // v1.0.5 fix multimonitor
-    originalPixmap = QPixmap::grabWindow(QApplication::desktop()->screen(screen) ->winId(),
-                                         screenres.x(), //!
-                                         screenres.y(), //!
-                                         screenres.width(),
-                                         screenres.height());
+    //    originalPixmap = QPixmap::grabWindow(QApplication::desktop()->screen(screen) ->winId(),
+    //                                         screenres.x(), //!
+    //                                         screenres.y(), //!
+    //                                         screenres.width(),
+    //                                         screenres.height());
+
+    //v.1.0.10 fix blink cursor for windows
+    if(isWinAPIGrab){
+                    originalPixmap = GrabWinAPI::grabScreen(QApplication::desktop()->screen(screen) ->winId(),
+                                                             screenres.x(), //!
+                                                             screenres.y(), //!
+                                                             screenres.width(),
+                                                             screenres.height());
+      } else {
+                 originalPixmap = GrabQt::grabScreen(QApplication::desktop()->screen(screen) ->winId(),
+                                                         screenres.x(), //!
+                                                         screenres.y(), //!
+                                                         screenres.width(),
+                                                         screenres.height());
+    }
 
     // v1.0.8 пересчет размеров зон при смене разрешени€
     if (screenresOld!=screenres)

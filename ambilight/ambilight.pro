@@ -1,6 +1,7 @@
 HEADERS       = window.h \
     delegate.h \
-    version.h
+    version.h \
+    grab/grab_api.h
 SOURCES       = main.cpp \
                 window.cpp \
     delegate.cpp
@@ -40,7 +41,11 @@ CONFIG(debug, debug|release) {
 
 win32 {
     LIBS += -lsetupapi -luuid -ladvapi32
+    LIBS    += -lgdi32
+    SOURCES += grab/grab_winapi.cpp
+    SOURCES += grab/grab_qt.cpp
 }
 unix:!macx {
     LIBS += -ludev
+    SOURCES += grab/grab_qt.cpp
 }
