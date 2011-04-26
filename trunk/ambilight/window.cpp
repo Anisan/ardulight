@@ -56,7 +56,7 @@
 
 //! [0]
 
-#define COUNT_AREA 14
+int COUNT_AREA=4;
 
 Window::Window()
 {
@@ -153,6 +153,9 @@ Window::Window()
 
     readSettings();
 
+    createZones();
+
+    readZonesSettings();
 
     //v 1.0.7  global shirtcuts on/off
    QString SHORTCUT_AMB = hotkeyLine->text();
@@ -189,8 +192,6 @@ Window::Window()
     connect(modeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(changeMode()));
 
     connect(saveAdv, SIGNAL(clicked()), this, SLOT(saveSettings()));
-
-    connect(screenComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(zoneRecalc()));
 
     connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
             this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
@@ -259,7 +260,6 @@ void Window::readSettings()
 
    onAmbiligthCheckBox->setChecked(settings->value("onAmbilight",false).toBool());
    delaySpinBox->setValue(settings->value("Delay",40).toInt());
-   channelSpinBox->setValue(settings->value("Channels",24).toInt());
    viewZoneCheckBox->setChecked(settings->value("ViewZoneOnPreview",false).toBool());
 
    viewGridCheckBox->setChecked(settings->value("ViewGridOnPreview",false).toBool());
@@ -267,6 +267,9 @@ void Window::readSettings()
 
    hotkeyLine->setText(settings->value("Hotkey","Ctrl+Alt+F").toString());
    hotkeyLineMode->setText(settings->value("HotkeyMode","Ctrl+Alt+M").toString());
+
+   areasSpinBox->setValue(settings->value("Areas",4).toInt());
+   COUNT_AREA = settings->value("Areas",4).toInt();
 
    ba = new QByteArray;
    ba->clear();
@@ -300,36 +303,21 @@ void Window::readSettings()
    dtrCheckBox->setChecked(settings->value("DTR",false).toBool());
    rtsCheckBox->setChecked(settings->value("RTS",false).toBool());
 
-
-    zoneRecalc();
-
- qDebug() << "end load settings ";
+    qDebug() << "end load settings ";
 }
 
-QRect screenresOld;
-void Window::zoneRecalc()
+void Window::readZonesSettings()
 {
-      int screen = screenComboBox->currentIndex();
-    QRect screenres = QApplication::desktop()->screenGeometry(screen);
-    screenresOld = screenres ;
-    float W = screenres.width() / 100.0;
-    float H =screenres.height() / 100.0;
-
-    R = QRect(W*getData(0,0),H*getData(0,1),W*getData(0,2),H*getData(0,3));
-    L = QRect(W*getData(1,0),H*getData(1,1),W*getData(1,2),H*getData(1,3));
-    T = QRect(W*getData(2,0),H*getData(2,1),W*getData(2,2),H*getData(2,3));
-    B = QRect(W*getData(3,0),H*getData(3,1),W*getData(3,2),H*getData(3,3));
-    R1 = QRect(W*getData(4,0),H*getData(4,1),W*getData(4,2),H*getData(4,3));
-    L1 = QRect(W*getData(5,0),H*getData(5,1),W*getData(5,2),H*getData(5,3));
-    T1 = QRect(W*getData(6,0),H*getData(6,1),W*getData(6,2),H*getData(6,3));
-    B1 = QRect(W*getData(7,0),H*getData(7,1),W*getData(7,2),H*getData(7,3));
-    R2 = QRect(W*getData(8,0),H*getData(8,1),W*getData(8,2),H*getData(8,3));
-    L2 = QRect(W*getData(9,0),H*getData(9,1),W*getData(9,2),H*getData(9,3));
-    T2 = QRect(W*getData(10,0),H*getData(10,1),W*getData(10,2),H*getData(10,3));
-    B2 = QRect(W*getData(11,0),H*getData(11,1),W*getData(11,2),H*getData(11,3));
-    R3 = QRect(W*getData(12,0),H*getData(12,1),W*getData(12,2),H*getData(12,3));
-    L3 = QRect(W*getData(13,0),H*getData(13,1),W*getData(13,2),H*getData(13,3));
+    for (int row = 0; row < COUNT_AREA; ++row) {
+        for (int column = 0; column < 4; ++column) {
+            QModelIndex index = model->index(row, column, QModelIndex());
+            model->setData(index, settings->value(QString("Zone_%1_%2").arg(row).arg(column),0).toInt() );
+        }
+        QModelIndex index = model->index(row, 4, QModelIndex());
+        model->setData(index, settings->value(QString("Zone_%1_Brightness").arg(row),100).toInt() );
+    }
 }
+
 
 int Window::getData(int x, int y)
 {
@@ -352,8 +340,6 @@ void Window::zoneSaveSettings()
     settings->setValue("ViewZoneOnPreview", viewZoneCheckBox->isChecked());
     settings->setValue("ViewGridOnPreview", viewGridCheckBox->isChecked());
     settings->setValue("StepGrid",stepSpinBox->value());
-
-    zoneRecalc();
 }
 
 
@@ -364,7 +350,7 @@ void Window::saveSettings()
     settings->setValue("StartMode", modeStartComboBox->currentIndex());
     settings->setValue("Screen",screenComboBox->currentText());
     settings->setValue("Delay",delaySpinBox->value());
-    settings->setValue("Channels",channelSpinBox->value());
+    settings->setValue("Areas",areasSpinBox->value());
 
     settings->setValue("Hotkey",hotkeyLine->text());
     settings->setValue("HotkeyMode",hotkeyLineMode->text());
@@ -379,6 +365,9 @@ void Window::saveSettings()
     settings->setValue("RTS", rtsCheckBox->isChecked());
 
 
+    COUNT_AREA = areasSpinBox->value();
+    createZones();
+    readZonesSettings();
 }
 
 void Window::saveColorSettings()
@@ -513,6 +502,7 @@ if (port->open(AbstractSerial::WriteOnly)) {
     else {
         qDebug() << "Error opened serial device " << port->deviceName();
         setIcon(3);
+        setSDK("off");
     }
 }
 
@@ -682,7 +672,9 @@ void Window::shootScreen()
 
     //v.1.0.10 fix blink cursor for windows
     if(isWinAPIGrab){
-                    originalPixmap = GrabWinAPI::grabScreen(QApplication::desktop()->screen(screen) ->winId(),
+        QDesktopWidget wid;
+        HWND hWnd = wid.screen(screen)->winId();
+                    originalPixmap = GrabWinAPI::grabScreen(hWnd,
                                                              screenres.x(), //!
                                                              screenres.y(), //!
                                                              screenres.width(),
@@ -695,33 +687,22 @@ void Window::shootScreen()
                                                          screenres.height());
     }
 
-    // v1.0.8 пересчет размеров зон при смене разрешения
-    if (screenresOld!=screenres)
-          zoneRecalc();
+    //пересчет размеров зон при смене разрешения
+    float W = screenres.width() / 100.0;
+    float H =screenres.height() / 100.0;
 
-
-    int channels = channelSpinBox->value();
     ba->clear();
     ba->append(255); // префикс
-              GetPix(R,getData(0,4));
-          if (channels>3) GetPix(L,getData(1,4));
-          if (channels>6) GetPix(T,getData(2,4));
-          if (channels>9) GetPix(B,getData(3,4));
+    //v.1.0.11 неограниченное кол-во зон
+    for (int i=0;i<COUNT_AREA;++i)
+    {
+        QRect R = QRect(W*getData(i,0),H*getData(i,1),W*getData(i,2),H*getData(i,3));
+        if (R.bottom()>originalPixmap.height()) R.setBottom(originalPixmap.height()-1);
+        if (R.right()>originalPixmap.width()) R.setRight(originalPixmap.width()-1);
+        GetPix(R,getData(i,4));
+    }
 
-          if (channels>12) GetPix(R1,getData(4,4));
-          if (channels>15) GetPix(L1,getData(5,4));
-          if (channels>18) GetPix(T1,getData(6,4));
-          if (channels>21) GetPix(B1,getData(7,4));
-
-          if (channels>24) GetPix(R2,getData(8,4));
-          if (channels>27) GetPix(L2,getData(9,4));
-          if (channels>30) GetPix(T2,getData(10,4));
-          if (channels>33) GetPix(B2,getData(11,4));
-
-          if (channels>36) GetPix(R3,getData(12,4));
-          if (channels>39) GetPix(L3,getData(13,4));
-
-        writePort();
+   writePort();
 
    refreshAmbilightEvaluated(t.elapsed());
 
@@ -750,10 +731,9 @@ void Window::backLight()
    Green=BLimit(Green-(qFloor(Green*TrackBar_Light)/ 255.0));//яркость
    Blue=BLimit(Blue-(qFloor(Blue*TrackBar_Light)/ 255.0));
 
-    int channels = channelSpinBox->value();
     ba->clear();
     ba->append(255); // префикс
-    for (int i=0;i<channels;i=i+3)
+    for (int i=0;i<COUNT_AREA;++i)
     {
         ba->append(Red);
         ba->append(Green);
@@ -829,10 +809,9 @@ void Window::moodLamp()
        prGreen=BLimit(prGreen-(qFloor(prGreen*TrackBar_Light)/ 255.0));//яркость
        prBlue=BLimit(prBlue-(qFloor(prBlue*TrackBar_Light)/ 255.0));
 
-        int channels = channelSpinBox->value();
         ba->clear();
         ba->append(255); // префикс
-        for (int i=0;i<channels;i=i+3)
+        for (int i=0;i<COUNT_AREA;++i)
         {
             ba->append(prRed);
             ba->append(prGreen);
@@ -899,10 +878,9 @@ void  Window::TestColor()
     off_ambiligth();
     int n=0;
     int f =255;
-    int channels = channelSpinBox->value();
     ba->clear();
     ba->append(255); // префикс
-    for (int i=0;i<channels;i=i+3)
+    for (int i=0;i<COUNT_AREA;++i)
     {
         ba->append(f);
         ba->append(n);
@@ -913,7 +891,7 @@ void  Window::TestColor()
    Sleep(1000);
     ba->clear();
     ba->append(255); // префикс
-    for (int i=0;i<channels;i=i+3)
+    for (int i=0;i<COUNT_AREA;++i)
     {
         ba->append(n);
         ba->append(f);
@@ -924,7 +902,7 @@ void  Window::TestColor()
     Sleep(1000);
     ba->clear();
     ba->append(255); // префикс
-    for (int i=0;i<channels;i=i+3)
+    for (int i=0;i<COUNT_AREA;++i)
     {
         ba->append(n);
         ba->append(n);
@@ -935,7 +913,7 @@ void  Window::TestColor()
     Sleep(1000);
     ba->clear();
     ba->append(255); // префикс
-    for (int i=0;i<channels;i=i+3)
+    for (int i=0;i<COUNT_AREA;++i)
     {
         ba->append(f);
         ba->append(f);
@@ -953,14 +931,13 @@ void  Window::TestZone()
     off_ambiligth();
     int n=0;
     int f =255;
-    int channels = channelSpinBox->value();
     ba->clear();
     ba->append(255); // префикс
-    for (int i=0;i<channels/3;++i)
+    for (int i=0;i<COUNT_AREA;++i)
     {
         ba->clear();
         ba->append(255); // префикс
-        for (int j=0;j<channels/3;++j)
+        for (int j=0;j<COUNT_AREA;++j)
         {
             if (i==j)
             {
@@ -985,8 +962,6 @@ void  Window::TestZone()
 
 }
 
-
-
 void Window::writePort()
 {
         QByteArray data;
@@ -997,7 +972,10 @@ void Window::writePort()
             onAction->setEnabled(true);
             offAction->setEnabled(false);
             if (onAmbiligth)
+            {
               setIcon(3);
+              setSDK("off");
+          }
             onAmbiligth = false;
         }
         else
@@ -1229,7 +1207,7 @@ void Window::createAdvancedGroupBox()
     QLabel *screenLabel = new QLabel(tr("Screen"));
     QLabel *delayLabel = new QLabel(tr("Refresh ambilight delay"));
     QLabel *delayLabel2 = new QLabel(tr("ms"));
-    QLabel *channelLabel = new QLabel(tr("Channel:"));
+    QLabel *areasLabel = new QLabel(tr("Number of zones"));
     QLabel *refreshLabel = new QLabel(tr("Refresh ambilight"));
     QLabel *refreshLabel2 = new QLabel(tr("Hz"));
     QLabel *hotkeyLabel = new QLabel(tr("Hotkey on/off"));
@@ -1245,9 +1223,9 @@ void Window::createAdvancedGroupBox()
     delaySpinBox->setMaximum(2000);
     delaySpinBox->setSingleStep(1);
 
-    channelSpinBox = new  QSpinBox();
-    channelSpinBox->setMinimum(1);
-    channelSpinBox->setMaximum(42);
+    areasSpinBox = new  QSpinBox();
+    areasSpinBox->setMinimum(1);
+    areasSpinBox->setMaximum(42);
 
     screenComboBox = new QComboBox();
     int count =  QApplication::desktop()->screenCount();
@@ -1263,8 +1241,8 @@ void Window::createAdvancedGroupBox()
     aLayout->addWidget(delayLabel,2,0);
     aLayout->addWidget(delaySpinBox,2,1);
     aLayout->addWidget(delayLabel2,2,2);
-    aLayout->addWidget(channelLabel,3,0);
-    aLayout->addWidget(channelSpinBox,3,1);
+    aLayout->addWidget(areasLabel,3,0);
+    aLayout->addWidget(areasSpinBox,3,1);
     aLayout->addWidget(refreshLabel,4,0);
     aLayout->addWidget(refreshAmbiliht,4,1);
     aLayout->addWidget(refreshLabel2,4,2);
@@ -1534,7 +1512,7 @@ void Window::createZoneTab()
 {
     QGridLayout *zoneLayout = new QGridLayout(zoneTabWidget);
 
-   model = new QStandardItemModel(COUNT_AREA, 5);
+    model = new QStandardItemModel(COUNT_AREA, 5);
     QTableView *tableView = new QTableView();
 
     tableView->setModel(model);
@@ -1543,7 +1521,7 @@ void Window::createZoneTab()
 
     zoneLayout->addWidget(tableView,0,0,1,3);
     // todo подумаю еще, может ну его нах
-//    zoneLayout->addWidget(zoneDesktopCheckBox);
+    //zoneLayout->addWidget(zoneDesktopCheckBox);
 
     viewZoneCheckBox = new QCheckBox(tr("View area on preview"));
     zoneLayout->addWidget(viewZoneCheckBox,1,0,1,3);
@@ -1559,7 +1537,7 @@ void Window::createZoneTab()
 
 
 
-    saveZone = new QPushButton(tr("Apply"));
+    saveZone = new QPushButton(tr("Save"));
     zoneLayout->addWidget(saveZone,3,0,1,3);
 
     SpinBoxDelegate *delegate = new SpinBoxDelegate;
@@ -1567,13 +1545,21 @@ void Window::createZoneTab()
     QStringList headerLabels;
     headerLabels << tr("Left") <<tr("Top") << tr("Width") <<tr( "Heigth")<<tr("Brightness");
     model->setHorizontalHeaderLabels(headerLabels);
+    tableView->horizontalHeader()->setResizeMode( QHeaderView::Stretch);
+return;
+}
+
+void Window::createZones()
+{
+    model->removeRows(0,model->rowCount());
+    QTableView *tableView = new QTableView();
+    tableView->setModel(model);
     QStringList verticalLabels;
     for (int i=0;i<COUNT_AREA;++i)
        verticalLabels.append(QString("%1 %2").arg(tr("Area ")).arg(i+1));
     model->setVerticalHeaderLabels(verticalLabels);
-    tableView->horizontalHeader()->setResizeMode( QHeaderView::Stretch);
 
-
-return;
 }
+
+
 

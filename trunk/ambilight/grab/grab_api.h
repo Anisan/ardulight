@@ -30,13 +30,6 @@
 #include <QWidget>
 #include <QColor>
 
-// Using WinAPI:
-//      if grabbing-monitor changed call findScreenOnNextCapture( HWND ) for update buffer size
-//      after it just call captureScreen(), getColor(), ..., getColor() repeatedly
-// Using Qt:
-//      just call getColor(...);
-
-
 namespace GrabQt
 {
     QPixmap grabScreen(WId id,int x, int y,int w,int h);

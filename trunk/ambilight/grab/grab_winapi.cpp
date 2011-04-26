@@ -54,29 +54,27 @@ HDC hScreenDC;
 HDC hMemDC;
 HBITMAP hBitmap;
 
+
+
  QPixmap grabScreen(WId id,int x, int y,int w,int h)
  {
+     if ((w!=screenWidth)&&(h!=screenHeight))
+        updateScreenAndAllocateMemory = true;
+
      if( updateScreenAndAllocateMemory ){
-         // Find the monitor, what contains firstLedWidget
-         HMONITOR hMonitor = MonitorFromWindow( id, MONITOR_DEFAULTTONEAREST );
-         ZeroMemory( &monitorInfo, sizeof(MONITORINFO) );
-         monitorInfo.cbSize = sizeof(MONITORINFO);
-         // Get position and resolution of the monitor
-         GetMonitorInfo( hMonitor, &monitorInfo );
-         screenWidth  = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
-         screenHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
          // CreateDC for multiple monitors
          hScreenDC = CreateDC( TEXT("DISPLAY"), NULL, NULL, NULL );
          // Create a bitmap compatible with the screen DC
-         hBitmap = CreateCompatibleBitmap( hScreenDC, screenWidth, screenHeight );
+         hBitmap = CreateCompatibleBitmap( hScreenDC, w, h );
+         screenWidth = w;
+         screenHeight=h;
          // Create a memory DC compatible to screen DC
          hMemDC = CreateCompatibleDC( hScreenDC );
          // Select new bitmap into memory DC
          SelectObject( hMemDC, hBitmap );
      }
      // Copy screen
-     BitBlt( hMemDC, 0, 0, screenWidth, screenHeight, hScreenDC,
-            monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top, SRCCOPY );
+     BitBlt( hMemDC, 0, 0, w, h, hScreenDC, x, y, SRCCOPY );
      if( updateScreenAndAllocateMemory ){
          BITMAP * bmp = new BITMAP;
          // Now get the actual Bitmap
@@ -96,7 +94,8 @@ HBITMAP hBitmap;
          //    qDebug() << "Not 32-bit mode is not supported!" << bytesPerPixel;
          }
          DeleteObject( bmp );
-         updateScreenAndAllocateMemory = false;
+         //
+        updateScreenAndAllocateMemory = false;
      }
      // Get the actual RGB data and put it into pbPixelsBuff
      GetBitmapBits( hBitmap, pixelsBuffSize, pbPixelsBuff );

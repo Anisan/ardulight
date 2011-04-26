@@ -79,6 +79,9 @@ public:
 
     void setVisible(bool visible);
 
+public slots:
+    void changeMode();
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -93,10 +96,9 @@ private slots:
     void shootScreen();
     void backLight();
     void moodLamp();
-    void changeMode();
+
     void slotPrintAllDevices(const QStringList &list);
     void zoneSaveSettings();
-    void zoneRecalc();
     void switchAmbilight();
     void switchMode();
     void TestColor();
@@ -132,12 +134,14 @@ private:
     void closePort();
 
     void readSettings();
+    void readZonesSettings();
     void createHardwareGroupBox();
     void createColorGroupBox();
     void createAdvancedGroupBox();
     void createActions();
     void createTrayIcon();
     void createZoneTab();
+    void createZones();
     void updateScreenshotLabel();
     void GetPix(QRect rect,int brightness);
     void refreshAmbilightEvaluated(double updateResultMs);
@@ -182,7 +186,7 @@ private:
     QComboBox *screenComboBox;
     QCheckBox *onAmbiligthCheckBox;
     QSpinBox *delaySpinBox;
-    QSpinBox *channelSpinBox;
+    QSpinBox *areasSpinBox;
     QSpinBox *stepSpinBox;
     QCheckBox *viewZoneCheckBox;
     QCheckBox *viewGridCheckBox;
