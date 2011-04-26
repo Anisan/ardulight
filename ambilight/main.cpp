@@ -75,7 +75,11 @@ int main(int argc, char *argv[])
     Window window;
 
     QSettings settings("settings.ini",QSettings::IniFormat);
-    if (settings.value("Channels",-1).toInt()==-1)
+    if (settings.value("Areas",-1).toInt()==-1)
+    {
        window.show();
+       window.changeMode();
+   }
+
     return app.exec();
 }
