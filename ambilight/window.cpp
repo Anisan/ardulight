@@ -672,9 +672,7 @@ void Window::shootScreen()
 
     //v.1.0.10 fix blink cursor for windows
     if(isWinAPIGrab){
-        QDesktopWidget wid;
-        HWND hWnd = wid.screen(screen)->winId();
-                    originalPixmap = GrabWinAPI::grabScreen(hWnd,
+                  originalPixmap = GrabWinAPI::grabScreen(QApplication::desktop()->screen(screen) ->winId(),
                                                              screenres.x(), //!
                                                              screenres.y(), //!
                                                              screenres.width(),
