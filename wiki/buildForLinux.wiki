@@ -1,0 +1,17 @@
+#summary Сборка программы под Linux.
+
+= Пакеты =
+Для Ubuntu 10.10 можно установить необходимые пакеты (svn, qt, gcc, cmake) следующей командой:
+{{{
+sudo apt-get install svn libqt4-dev qt4-qmake cmake 
+}}}
+
+= Сборка =
+
+
+{{{
+svn checkout http://ardulight.googlecode.com/svn/trunk/ ardulight
+cd ardulight
+qmake
+make
+}}}
