@@ -3,7 +3,7 @@
 = Пакеты =
 Для Ubuntu 10.10 можно установить необходимые пакеты (svn, qt, gcc, cmake) следующей командой:
 {{{
-sudo apt-get install svn libqt4-dev gcc qt4-qmake cmake 
+sudo apt-get install svn libqt4-dev gcc qt4-qmake cmake udev libudev-dev
 }}}
 
 = Сборка =
